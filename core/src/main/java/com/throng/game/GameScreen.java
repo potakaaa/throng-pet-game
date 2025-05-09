@@ -1,6 +1,7 @@
 package com.throng.game;
 
 import java.util.HashMap;
+import java.util.Vector;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -42,7 +43,7 @@ public class GameScreen implements Screen {
     private PetState previousState;
     private TextureRegion currentFrame;
     private Vector2 petPosition;
-    private float petScale = 0.5f; // Scale of the pet
+    private float petScale = 0.3f; // Scale of the pet
 
     // Pet status
     private float hunger;
@@ -54,6 +55,11 @@ public class GameScreen implements Screen {
     private ProgressBar hungerBar;
     private ProgressBar happinessBar;
     private ProgressBar energyBar;
+
+    // Walking animation
+    private Vector2 targetPosition;
+    private boolean isWalking = false;
+    private float walkSpeed = 100f; // Pixels per second
 
     // pet state enum
     private enum PetState {
@@ -87,6 +93,7 @@ public class GameScreen implements Screen {
 
         // initialize pet position
         petPosition = new Vector2(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2);
+        targetPosition = new Vector2(petPosition);
 
         // Initalize pet state
         currentState = PetState.IDLE;
@@ -329,6 +336,45 @@ public class GameScreen implements Screen {
                 }
             }
 
+            if (Math.random() < 0.002 && !isWalking) {
+                startRandomWalk();
+            }
+
+        }
+
+        if (currentState == PetState.WALKING) {
+            if (stateTime > 3f || (isWalking && petPosition.dst(targetPosition) < 5f)) {
+                currentState = PetState.IDLE;
+                isWalking = false;
+                stateTime = 0;
+            }
+        }
+    }
+
+    private void startRandomWalk() {
+        float screenWidth = viewport.getWorldWidth();
+        float screenHeight = viewport.getWorldHeight();
+
+        float paddingX = screenWidth * 0.2f;
+        float paddingY = screenHeight * 0.2f;
+
+        targetPosition.x = paddingX + (float) Math.random() * (screenWidth - 2 * paddingX);
+        targetPosition.y = paddingY + (float) Math.random() * (screenHeight - 2 * paddingY);
+
+        isWalking = true;
+        currentState = PetState.WALKING;
+        stateTime = 0;
+    }
+
+    private void updateWalking(float delta) {
+        Vector2 direction = new Vector2(targetPosition).sub(petPosition).nor();
+
+        petPosition.x += direction.x * walkSpeed * delta;
+        petPosition.y += direction.y * walkSpeed * delta;
+
+        if (petPosition.dst(targetPosition) < 5f) {
+            isWalking = false;
+            currentState = PetState.IDLE;
         }
     }
 
