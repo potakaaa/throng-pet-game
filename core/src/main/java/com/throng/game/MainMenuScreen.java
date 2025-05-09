@@ -63,6 +63,8 @@ public class MainMenuScreen implements Screen {
             public void changed(ChangeEvent event, Actor actor) {
                 // TODO: Change to the game screen when implemented
                 Gdx.app.log("MainMenuScreen", "Play button clicked");
+                game.setScreen(new GameScreen(game));
+                dispose();
             }
         });
 
