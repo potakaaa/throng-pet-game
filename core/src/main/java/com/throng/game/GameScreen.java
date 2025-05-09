@@ -11,7 +11,6 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.throng.game.animation.AnimationManager;
 import com.throng.game.entity.Pet;
 import com.throng.game.ui.PetStatsUI;
 
@@ -25,43 +24,47 @@ public class GameScreen implements Screen {
     private final Skin skin;
     private final Pet pet;
     private final PetStatsUI petStatsUI;
-    private final AnimationManager animationManager;
 
     private final float petScale = 0.3f;
 
     public GameScreen(final ThrongGame game) {
         this.game = game;
 
+        // Set up camera and viewport
         camera = new OrthographicCamera();
         viewport = new FitViewport(640, 480, camera);
         camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
+        // Set up stage and input
         stage = new Stage(viewport, game.batch);
         Gdx.input.setInputProcessor(stage);
 
+        // Load background and UI skin
         backgroundTexture = new Texture("background/background_1/background 1.png");
         skin = new Skin(Gdx.files.internal("skin/uiskin.json"));
 
-        pet = new Pet(new Vector2(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2));
-        animationManager = new AnimationManager();
-
+        // Create pet stats UI
         petStatsUI = new PetStatsUI(stage, skin, new PetStatsUI.PetActionListener() {
             @Override public void onFeed() { pet.feed(); }
             @Override public void onPlay() { pet.play(); }
             @Override public void onSleep() { pet.sleep(); }
         });
+
+        // Create pet and link it to the UI
+        pet = new Pet(new Vector2(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2), petStatsUI);
     }
 
     private void update(float delta) {
         pet.update(delta, viewport.getWorldWidth(), viewport.getWorldHeight());
-        petStatsUI.updateBars(pet.getHunger(), pet.getHappiness(), pet.getEnergy());
     }
 
     private void drawPet() {
-        TextureRegion frame = animationManager.get(pet.getState().toString()).getKeyFrame(pet.getStateTime());
+        TextureRegion frame = pet.getCurrentFrame();
+        Vector2 pos = pet.getPosition();
+
         float width = frame.getRegionWidth() * petScale;
         float height = frame.getRegionHeight() * petScale;
-        Vector2 pos = pet.getPosition();
+
         game.batch.draw(frame, pos.x - width / 2, pos.y - height / 2, width, height);
     }
 
@@ -69,25 +72,21 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         update(delta);
 
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f); // clear to black
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
 
         game.batch.begin();
-
-        game.batch.setColor(1f, 1f, 1f, 1f); // ← critical: reset tint
+        game.batch.setColor(1f, 1f, 1f, 1f);
         game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
-
-        drawPet(); // assumes drawPet() also uses correct tint
-
+        drawPet();
         game.batch.end();
 
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
     }
-
 
     @Override public void show() {}
     @Override public void resize(int width, int height) {
@@ -98,10 +97,11 @@ public class GameScreen implements Screen {
     @Override public void resume() {}
     @Override public void hide() {}
 
-    @Override public void dispose() {
+    @Override
+    public void dispose() {
         backgroundTexture.dispose();
         skin.dispose();
         stage.dispose();
-        animationManager.dispose();
+        pet.dispose();  // pet now owns its AnimationManager
     }
 }

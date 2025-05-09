@@ -1,46 +1,72 @@
 package com.throng.game.entity;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.throng.game.animation.AnimationManager;
+import com.throng.game.ui.PetStatsUI;
 
 public class Pet {
     public enum PetState {
         IDLE, WALKING, BLINKING, SLEEPING, EATING, PLAYING
     }
 
-    private Vector2 position, targetPosition;
-    private PetState currentState, previousState;
-    private float stateTime;
-    private float hunger, happiness, energy;
-    private final float MAX_STAT = 100f;
-    private final float STAT_DECAY_RATE = 5f;
-    private boolean isWalking;
-    private final float walkSpeed = 100f;
+    private final Vector2 position;
+    private final Vector2 targetPosition;
 
-    public Pet(Vector2 startPos) {
+    private PetState currentState;
+    private PetState previousState;
+
+    private float stateTime;
+
+    private float hunger, happiness, energy;
+    private static final float MAX_STAT = 100f;
+    private static final float STAT_DECAY_RATE = 5f;
+
+    private boolean isWalking;
+    private static final float WALK_SPEED = 100f;
+
+    private final AnimationManager animationManager;
+    private final PetStatsUI statsUI;
+
+    public Pet(Vector2 startPos, PetStatsUI statsUI) {
         this.position = new Vector2(startPos);
         this.targetPosition = new Vector2(startPos);
-        currentState = PetState.IDLE;
-        previousState = PetState.IDLE;
-        hunger = happiness = energy = MAX_STAT;
+        this.statsUI = statsUI;
+
+        this.animationManager = new AnimationManager();
+        this.currentState = PetState.IDLE;
+        this.previousState = PetState.IDLE;
+        this.hunger = MAX_STAT;
+        this.happiness = MAX_STAT;
+        this.energy = MAX_STAT;
+        this.stateTime = 0;
     }
 
     public void update(float delta, float screenWidth, float screenHeight) {
         stateTime += delta;
+        decayStats(delta);
+
+        updateBehavior(screenWidth, screenHeight, delta);
+
+        // Sync UI
+        statsUI.updateBars(hunger, happiness, energy);
+    }
+
+    private void decayStats(float delta) {
         hunger = Math.max(hunger - STAT_DECAY_RATE * delta, 0);
         happiness = Math.max(happiness - STAT_DECAY_RATE * delta, 0);
         energy = Math.max(energy - STAT_DECAY_RATE * delta, 0);
+    }
 
+    private void updateBehavior(float screenWidth, float screenHeight, float delta) {
         previousState = currentState;
 
         if (currentState == PetState.IDLE || currentState == PetState.BLINKING) {
-            if (Math.random() < 0.01)
-                toggleBlink();
-            if (Math.random() < 0.002 && !isWalking)
-                startRandomWalk(screenWidth, screenHeight);
+            if (Math.random() < 0.01) toggleBlink();
+            if (Math.random() < 0.002 && !isWalking) startRandomWalk(screenWidth, screenHeight);
         }
 
-        if (currentState == PetState.WALKING)
-            updateWalking(delta);
+        if (currentState == PetState.WALKING) updateWalking(delta);
     }
 
     private void toggleBlink() {
@@ -50,7 +76,7 @@ public class Pet {
 
     private void updateWalking(float delta) {
         Vector2 direction = new Vector2(targetPosition).sub(position).nor();
-        position.mulAdd(direction, walkSpeed * delta);
+        position.mulAdd(direction, WALK_SPEED * delta);
 
         if (position.dst(targetPosition) < 5f) {
             isWalking = false;
@@ -66,8 +92,8 @@ public class Pet {
         targetPosition.x = paddingX + (float) Math.random() * (screenWidth - 2 * paddingX);
         targetPosition.y = paddingY + (float) Math.random() * (screenHeight - 2 * paddingY);
 
-        currentState = PetState.WALKING;
         isWalking = true;
+        currentState = PetState.WALKING;
         stateTime = 0;
     }
 
@@ -90,11 +116,15 @@ public class Pet {
         stateTime = 0;
     }
 
-    // Getters
-    public float getHunger() { return hunger; }
-    public float getHappiness() { return happiness; }
-    public float getEnergy() { return energy; }
-    public Vector2 getPosition() { return position; }
-    public PetState getState() { return currentState; }
-    public float getStateTime() { return stateTime; }
+    public TextureRegion getCurrentFrame() {
+        return animationManager.get(currentState.toString()).getKeyFrame(stateTime);
+    }
+
+    public Vector2 getPosition() {
+        return position;
+    }
+
+    public void dispose() {
+        animationManager.dispose();
+    }
 }
