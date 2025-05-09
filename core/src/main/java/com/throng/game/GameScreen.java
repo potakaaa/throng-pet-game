@@ -4,15 +4,21 @@ import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -44,6 +50,10 @@ public class GameScreen implements Screen {
     private float energy;
     private static final float MAX_STAT = 100f;
     private static final float STAT_DECAY_RATE = 5f;
+
+    private ProgressBar hungerBar;
+    private ProgressBar happinessBar;
+    private ProgressBar energyBar;
 
     // pet state enum
     private enum PetState {
@@ -97,7 +107,7 @@ public class GameScreen implements Screen {
 
         animations.put("IDLE", loadAnimation("sprite/Idle", 18, 0.1f));
         animations.put("BLINKING", loadAnimation("sprite/Idle Blinking", 18, 0.1f));
-        animations.put("WALK", loadAnimation("sprite/Walking", 18, 0.1f));
+        animations.put("WALKING", loadAnimation("sprite/Walking", 18, 0.1f));
 
     }
 
@@ -129,9 +139,118 @@ public class GameScreen implements Screen {
         Table actionTable = new Table();
         actionTable.bottom().pad(10);
 
-        // TODO: Add action buttons here for feeding, playing, and sleeping
+        hungerBar = createProgressBar(hunger, MAX_STAT, 0.25f, 0, 1);
+        happinessBar = createProgressBar(happiness, MAX_STAT, 0, 0.5f, 0);
+        energyBar = createProgressBar(energy, MAX_STAT, 0, 0.1f, 0.8f);
+
+        // Labels and prog bars
+        Label hungerLabel = new Label("Hunger: ", skin);
+        Label happinessLabel = new Label("Happiness: ", skin);
+        Label energyLabel = new Label("Energy: ", skin);
+
+        statusTable.add(hungerLabel).left().padRight(5);
+        statusTable.add(hungerBar).width(150).padRight(20);
+
+        statusTable.add(happinessLabel).left().padRight(5);
+        statusTable.add(happinessBar).width(150).padRight(20);
+
+        statusTable.add(energyLabel).left().padRight(5);
+        statusTable.add(energyBar).width(150).padRight(20);
+
+        mainTable.add(statusTable).expandX().fillX().padBottom(20).row();
+
+        // Buttons for feeding, playing, and sleeping
+        TextButton feedButton = new TextButton("Feed", skin);
+        TextButton playButton = new TextButton("Play", skin);
+        TextButton sleepButton = new TextButton("Sleep", skin);
+
+        styleActionButton(feedButton, new Color(1f, 0.5f, 0f, 1f)); // Orange
+        styleActionButton(playButton, new Color(0f, 0.8f, 0.2f, 1f)); // Green
+        styleActionButton(sleepButton, new Color(0.2f, 0.4f, 0.8f, 1f)); // Blue
+
+        game.batch.setColor(1, 1, 1, 1);
+
+        // Button listeners
+        feedButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                feedPet();
+            }
+        });
+
+        playButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                playWithPet();
+            }
+        });
+
+        sleepButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                putPetToSleep();
+            }
+        });
+
+        // Add buttons to action table
+        actionTable.add(feedButton).width(120).height(50).padRight(20);
+        actionTable.add(playButton).width(120).height(50).padRight(20);
+        actionTable.add(sleepButton).width(120).height(50);
 
         mainTable.add(actionTable).expandX().fillX().expandY();
+
+    }
+
+    private ProgressBar createProgressBar(float initial, float max, float r, float g, float b) {
+        ProgressBar.ProgressBarStyle progressBarStyle = new ProgressBar.ProgressBarStyle(
+                skin.get("default-horizontal", ProgressBar.ProgressBarStyle.class));
+        progressBarStyle.knobBefore = skin.newDrawable("white", new Color(r, g, b, 1));
+
+        ProgressBar progressBar = new ProgressBar(0, max, 1, false, progressBarStyle);
+        progressBar.setValue(initial);
+        return progressBar;
+    }
+
+    private void styleActionButton(TextButton button, Color color) {
+        button.getLabel().setFontScale(1.2f);
+        button.setColor(color);
+    }
+
+    private void feedPet() {
+        hunger = Math.min(MAX_STAT, hunger + 30);
+
+        hungerBar.setValue(hunger);
+
+        currentState = PetState.IDLE;
+        stateTime = 0;
+
+        Gdx.app.log("Feed", "Pet fed! Hunger: " + hunger);
+    }
+
+    private void playWithPet() {
+        // increase happiness and decrease energy
+        happiness = Math.min(MAX_STAT, happiness + 25);
+        energy = Math.max(0, energy - 10);
+
+        happinessBar.setValue(happiness);
+        energyBar.setValue(energy);
+
+        currentState = PetState.WALKING;
+        stateTime = 0;
+
+        Gdx.app.log("Play", "Pet played! Happiness: " + happiness + " Energy: " + energy);
+    }
+
+    private void putPetToSleep() {
+        energy = Math.min(MAX_STAT, energy + 50);
+
+        energyBar.setValue(energy);
+
+        currentState = PetState.IDLE;
+        stateTime = 0;
+
+        Gdx.app.log("Sleep", "Pet slept! Energy: " + energy);
+
     }
 
     @Override
@@ -144,20 +263,23 @@ public class GameScreen implements Screen {
         // update logic
         update(delta);
 
-        Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
+        // Clear the screen
+        Gdx.gl.glClearColor(0.15f, 0.15f, 0.2f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // update camera
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
 
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
         game.batch.begin();
+        game.batch.setColor(1, 1, 1, 1);
         game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
-
         drawPet();
-
         game.batch.end();
 
+        // Draw UI
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
 
@@ -167,6 +289,11 @@ public class GameScreen implements Screen {
         stateTime += delta;
 
         updatePetStats(delta);
+
+        hungerBar.setValue(hunger);
+        happinessBar.setValue(happiness);
+        energyBar.setValue(energy);
+
         updatePetState();
     }
 
