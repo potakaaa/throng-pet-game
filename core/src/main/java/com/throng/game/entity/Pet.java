@@ -3,7 +3,6 @@ package com.throng.game.entity;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.throng.game.animation.AnimationManager;
-import com.throng.game.ui.PetStatsUI;
 
 public class Pet {
     public enum PetState {
@@ -26,12 +25,12 @@ public class Pet {
     private static final float WALK_SPEED = 100f;
 
     private final AnimationManager animationManager;
-    private final PetStatsUI statsUI;
+    private final PetStatObserver statsObserver;
 
-    public Pet(Vector2 startPos, PetStatsUI statsUI) {
+    public Pet(Vector2 startPos, PetStatObserver statsObserver) {
         this.position = new Vector2(startPos);
         this.targetPosition = new Vector2(startPos);
-        this.statsUI = statsUI;
+        this.statsObserver = statsObserver;
 
         this.animationManager = new AnimationManager();
         this.currentState = PetState.IDLE;
@@ -45,11 +44,10 @@ public class Pet {
     public void update(float delta, float screenWidth, float screenHeight) {
         stateTime += delta;
         decayStats(delta);
-
         updateBehavior(screenWidth, screenHeight, delta);
 
-        // Sync UI
-        statsUI.updateBars(hunger, happiness, energy);
+        // Notify observer
+        statsObserver.updateBars(hunger, happiness, energy);
     }
 
     private void decayStats(float delta) {

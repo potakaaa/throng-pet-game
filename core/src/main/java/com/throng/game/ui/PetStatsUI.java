@@ -5,8 +5,9 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.throng.game.entity.PetStatObserver;
 
-public class PetStatsUI {
+public class PetStatsUI implements PetStatObserver {
     private final Table statusTable;
     private final Table buttonTable;
 
@@ -26,23 +27,15 @@ public class PetStatsUI {
         statusTable = buildStatusTable(skin);
         buttonTable = buildButtonTable(skin, listener);
 
-        // Attach both to stage
-        statusTable.setPosition(10, stage.getHeight() - 10);  // top-left
-        statusTable.top().left();
-        stage.addActor(statusTable);
-
-
         Table layoutTable = new Table();
         layoutTable.setFillParent(true);
-
         layoutTable.top().left().add(statusTable).expand().top().left().pad(10);
         layoutTable.row();
         layoutTable.bottom().add(buttonTable).expandX().center().padBottom(30);
 
         stage.addActor(layoutTable);
 
-
-        // Initialize bars
+        // Initialize progress bar references
         hungerBar = (ProgressBar) statusTable.getCells().get(1).getActor();
         happinessBar = (ProgressBar) statusTable.getCells().get(3).getActor();
         energyBar = (ProgressBar) statusTable.getCells().get(5).getActor();
@@ -84,22 +77,19 @@ public class PetStatsUI {
         sleepButton.setColor(new Color(0.2f, 0.4f, 0.8f, 1f));
 
         feedButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            @Override public void changed(ChangeEvent event, Actor actor) {
                 listener.onFeed();
             }
         });
 
         playButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            @Override public void changed(ChangeEvent event, Actor actor) {
                 listener.onPlay();
             }
         });
 
         sleepButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            @Override public void changed(ChangeEvent event, Actor actor) {
                 listener.onSleep();
             }
         });
@@ -118,6 +108,7 @@ public class PetStatsUI {
         return style;
     }
 
+    @Override
     public void updateBars(float hunger, float happiness, float energy) {
         hungerBar.setValue(hunger);
         happinessBar.setValue(happiness);

@@ -16,12 +16,14 @@ import com.throng.game.ui.PetStatsUI;
 
 public class GameScreen implements Screen {
     private final ThrongGame game;
+
     private final OrthographicCamera camera;
     private final Viewport viewport;
     private final Stage stage;
 
     private final Texture backgroundTexture;
     private final Skin skin;
+
     private final Pet pet;
     private final PetStatsUI petStatsUI;
 
@@ -30,28 +32,30 @@ public class GameScreen implements Screen {
     public GameScreen(final ThrongGame game) {
         this.game = game;
 
-        // Set up camera and viewport
+        // Camera setup
         camera = new OrthographicCamera();
         viewport = new FitViewport(640, 480, camera);
         camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
-        // Set up stage and input
+        // Stage setup
         stage = new Stage(viewport, game.batch);
         Gdx.input.setInputProcessor(stage);
 
-        // Load background and UI skin
+        // Load assets
         backgroundTexture = new Texture("background/background_1/background 1.png");
         skin = new Skin(Gdx.files.internal("skin/uiskin.json"));
 
-        // Create pet stats UI
+        // UI and pet
         petStatsUI = new PetStatsUI(stage, skin, new PetStatsUI.PetActionListener() {
             @Override public void onFeed() { pet.feed(); }
             @Override public void onPlay() { pet.play(); }
             @Override public void onSleep() { pet.sleep(); }
         });
 
-        // Create pet and link it to the UI
-        pet = new Pet(new Vector2(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2), petStatsUI);
+        pet = new Pet(
+            new Vector2(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f),
+            petStatsUI
+        );
     }
 
     private void update(float delta) {
@@ -91,7 +95,7 @@ public class GameScreen implements Screen {
     @Override public void show() {}
     @Override public void resize(int width, int height) {
         viewport.update(width, height);
-        camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
+        camera.position.set(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f, 0);
     }
     @Override public void pause() {}
     @Override public void resume() {}
@@ -102,6 +106,6 @@ public class GameScreen implements Screen {
         backgroundTexture.dispose();
         skin.dispose();
         stage.dispose();
-        pet.dispose();  // pet now owns its AnimationManager
+        pet.dispose(); // Pet owns animation manager
     }
 }
