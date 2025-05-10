@@ -42,7 +42,7 @@ public class GameScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
 
         // Load assets
-        backgroundTexture = new Texture("background/background_1/background 1.png");
+        backgroundTexture = new Texture("background/Grass_Sample.png");
         skin = new Skin(Gdx.files.internal("skin/uiskin.json"));
 
         // UI and pet
@@ -71,7 +71,6 @@ public class GameScreen implements Screen {
 
         game.batch.draw(frame, pos.x - width / 2, pos.y - height / 2, width, height);
     }
-
     @Override
     public void render(float delta) {
         update(delta);
@@ -84,13 +83,32 @@ public class GameScreen implements Screen {
 
         game.batch.begin();
         game.batch.setColor(1f, 1f, 1f, 1f);
-        game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
-        drawPet();
+
+        // --- Begin updated background drawing logic ---
+        float bgWidth = backgroundTexture.getWidth();
+        float bgHeight = backgroundTexture.getHeight();
+
+        // Calculate scale to fit the full screen height (may crop width)
+        float scale = viewport.getWorldHeight() / bgHeight;
+
+        float drawWidth = bgWidth * scale;
+        float drawHeight = bgHeight * scale;
+
+        // Center horizontally, align to bottom
+        float x = (viewport.getWorldWidth() - drawWidth) / 2f;
+        float y = 0f;
+
+        game.batch.draw(backgroundTexture, x, y, drawWidth, drawHeight);
+        // --- End background drawing logic ---
+
+        drawPet(); // Don't forget to draw your pet too
+
         game.batch.end();
 
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
     }
+
 
     @Override public void show() {}
     @Override public void resize(int width, int height) {

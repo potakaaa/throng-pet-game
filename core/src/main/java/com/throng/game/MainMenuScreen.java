@@ -34,7 +34,7 @@ public class MainMenuScreen implements Screen {
         Gdx.input.setInputProcessor(stage);
 
         // Load bg
-        backgroundTexture = new Texture(Gdx.files.internal("background/background_1/background 1.png"));
+        backgroundTexture = new Texture(Gdx.files.internal("background/menuBG.jpg"));
 
         // UI elements
         createUI();
@@ -80,20 +80,30 @@ public class MainMenuScreen implements Screen {
     public void show() {
 
     }
-
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0.15f, 0.15f, 0.2f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Update cam
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
 
-        // Draw bg
+        // --- Background draw with zoom (no stretch) ---
+        float bgWidth = backgroundTexture.getWidth();
+        float bgHeight = backgroundTexture.getHeight();
+
+        float scale = viewport.getWorldHeight() / bgHeight; // fill screen height
+
+        float drawWidth = bgWidth * scale;
+        float drawHeight = bgHeight * scale;
+
+        float x = (viewport.getWorldWidth() - drawWidth) / 2f;
+        float y = 0f;
+
         game.batch.begin();
-        game.batch.draw(backgroundTexture, 0, 0, 640, 480);
+        game.batch.draw(backgroundTexture, x, y, drawWidth, drawHeight);
         game.batch.end();
+        // --- End background draw ---
 
         // Draw UI
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
