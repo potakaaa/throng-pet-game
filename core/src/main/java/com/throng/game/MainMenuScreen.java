@@ -11,8 +11,9 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 public class MainMenuScreen implements Screen {
     private final ThrongGame game;
@@ -21,6 +22,10 @@ public class MainMenuScreen implements Screen {
     private Stage stage;
 
     private Texture backgroundTexture;
+    private Texture playButtonDefault;
+    private Texture playButtonHover;
+    private Texture exitButtonDefault;
+    private Texture exitButtonHover;
 
     public MainMenuScreen(ThrongGame game) {
         this.game = game;
@@ -33,36 +38,41 @@ public class MainMenuScreen implements Screen {
         stage = new Stage(viewport, game.batch);
         Gdx.input.setInputProcessor(stage);
 
-        // Load bg
+        // Load assets
         backgroundTexture = new Texture(Gdx.files.internal("background/menuBG.jpg"));
+        playButtonDefault = new Texture(Gdx.files.internal("buttons/Square/Play/Default.png"));
+        playButtonHover = new Texture(Gdx.files.internal("buttons/Square/Play/Hover.png"));
+        exitButtonDefault = new Texture(Gdx.files.internal("buttons/Square/Home/Default.png"));
+        exitButtonHover = new Texture(Gdx.files.internal("buttons/Square/Home/Hover.png"));
 
         // UI elements
         createUI();
     }
 
     private void createUI() {
-        Skin skin = new Skin(Gdx.files.internal("skin/uiskin.json"));
-
         // Table for layout
         Table table = new Table();
         table.setFillParent(true);
         stage.addActor(table);
 
-        // Buttons
-        TextButton playButton = new TextButton("Play", skin);
-        TextButton exitButton = new TextButton("Exit", skin);
+        // Create buttons with hover effects
+        ImageButton playButton = new ImageButton(
+                new TextureRegionDrawable(playButtonDefault),
+                new TextureRegionDrawable(playButtonHover));
+
+        ImageButton exitButton = new ImageButton(
+                new TextureRegionDrawable(exitButtonDefault),
+                new TextureRegionDrawable(exitButtonHover));
 
         // Append to table with spacing
-        table.add(playButton).width(200).height(60).padBottom(20);
+        table.add(playButton).width(100).height(100).padBottom(10);
         table.row();
-        table.add(exitButton).width(200).height(60);
+        table.add(exitButton).width(100).height(100);
 
         // Listeners
         playButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                // TODO: Change to the game screen when implemented
-                Gdx.app.log("MainMenuScreen", "Play button clicked");
                 game.setScreen(new GameScreen(game));
                 dispose();
             }
@@ -78,8 +88,8 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void show() {
-
     }
+
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0.15f, 0.15f, 0.2f, 1f);
@@ -118,12 +128,10 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void pause() {
-        // TODO Auto-generated method stub
     }
 
     @Override
     public void resume() {
-        // TODO Auto-generated method stub
     }
 
     @Override
@@ -134,7 +142,10 @@ public class MainMenuScreen implements Screen {
     @Override
     public void dispose() {
         backgroundTexture.dispose();
+        playButtonDefault.dispose();
+        playButtonHover.dispose();
+        exitButtonDefault.dispose();
+        exitButtonHover.dispose();
         stage.dispose();
     }
-
 }

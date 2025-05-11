@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.throng.game.entity.Pet;
 import com.throng.game.ui.PetStatsUI;
+import com.badlogic.gdx.Input;
 
 public class GameScreen implements Screen {
     private final ThrongGame game;
@@ -28,6 +29,9 @@ public class GameScreen implements Screen {
     private final PetStatsUI petStatsUI;
 
     private final float petScale = 0.3f;
+
+    private float timeSinceManualInput = 0f;
+    private static final float AUTO_BEHAVIOR_TIMEOUT = 1.5f;
 
     public GameScreen(final ThrongGame game) {
         this.game = game;
@@ -47,77 +51,112 @@ public class GameScreen implements Screen {
 
         // UI and pet
         petStatsUI = new PetStatsUI(stage, skin, new PetStatsUI.PetActionListener() {
-            @Override public void onFeed() { pet.feed(); }
-            @Override public void onPlay() { pet.play(); }
-            @Override public void onSleep() { pet.sleep(); }
+            @Override
+            public void onFeed() {
+                pet.feed();
+            }
+
+            @Override
+            public void onPlay() {
+                pet.play();
+            }
+
+            @Override
+            public void onSleep() {
+                pet.sleep();
+            }
         });
 
         pet = new Pet(
-            new Vector2(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f),
-            petStatsUI
-        );
+                new Vector2(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f),
+                petStatsUI);
     }
 
     private void update(float delta) {
+        // Handle WASD input for pet movement
+        float dx = 0, dy = 0;
+        boolean keyPressed = false;
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            dy += 1;
+            keyPressed = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            dy -= 1;
+            keyPressed = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            dx -= 1;
+            keyPressed = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            dx += 1;
+            keyPressed = true;
+        }
+        if (keyPressed) {
+            pet.manualMove(dx, dy, viewport.getWorldWidth(), viewport.getWorldHeight(), delta);
+            timeSinceManualInput = 0f;
+        } else {
+            timeSinceManualInput += delta;
+        }
+        // Suppress auto behavior only during timeout
+        pet.suppressAutoBehavior = (!keyPressed && timeSinceManualInput < AUTO_BEHAVIOR_TIMEOUT);
         pet.update(delta, viewport.getWorldWidth(), viewport.getWorldHeight());
     }
 
     private void drawPet() {
         TextureRegion frame = pet.getCurrentFrame();
         Vector2 pos = pet.getPosition();
-
         float width = frame.getRegionWidth() * petScale;
         float height = frame.getRegionHeight() * petScale;
-
         game.batch.draw(frame, pos.x - width / 2, pos.y - height / 2, width, height);
     }
+
     @Override
     public void render(float delta) {
         update(delta);
-
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
-
         game.batch.begin();
         game.batch.setColor(1f, 1f, 1f, 1f);
-
-        // --- Begin updated background drawing logic ---
+        // Draw background
         float bgWidth = backgroundTexture.getWidth();
         float bgHeight = backgroundTexture.getHeight();
-
-        // Calculate scale to fit the full screen height (may crop width)
         float scale = viewport.getWorldHeight() / bgHeight;
-
         float drawWidth = bgWidth * scale;
         float drawHeight = bgHeight * scale;
-
-        // Center horizontally, align to bottom
         float x = (viewport.getWorldWidth() - drawWidth) / 2f;
         float y = 0f;
-
         game.batch.draw(backgroundTexture, x, y, drawWidth, drawHeight);
-        // --- End background drawing logic ---
-
-        drawPet(); // Don't forget to draw your pet too
-
+        // Draw pet only
+        drawPet();
         game.batch.end();
-
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
     }
 
+    @Override
+    public void show() {
+    }
 
-    @Override public void show() {}
-    @Override public void resize(int width, int height) {
+    @Override
+    public void resize(int width, int height) {
         viewport.update(width, height);
         camera.position.set(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f, 0);
     }
-    @Override public void pause() {}
-    @Override public void resume() {}
-    @Override public void hide() {}
+
+    @Override
+    public void pause() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
+    @Override
+    public void hide() {
+    }
 
     @Override
     public void dispose() {

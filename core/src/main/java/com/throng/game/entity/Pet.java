@@ -27,6 +27,12 @@ public class Pet {
     private final AnimationManager animationManager;
     private final PetStatObserver statsObserver;
 
+    private static final float MANUAL_MOVE_SPEED = 200f;
+    private boolean manualControl = false;
+    private boolean moving = false;
+
+    public boolean suppressAutoBehavior = false;
+
     public Pet(Vector2 startPos, PetStatObserver statsObserver) {
         this.position = new Vector2(startPos);
         this.targetPosition = new Vector2(startPos);
@@ -44,8 +50,13 @@ public class Pet {
     public void update(float delta, float screenWidth, float screenHeight) {
         stateTime += delta;
         decayStats(delta);
-        updateBehavior(screenWidth, screenHeight, delta);
-
+        if (!manualControl) {
+            updateBehavior(screenWidth, screenHeight, delta);
+        } else {
+            if (!moving)
+                currentState = PetState.IDLE;
+            manualControl = false; // reset for next frame
+        }
         // Notify observer
         statsObserver.updateBars(hunger, happiness, energy);
     }
@@ -58,13 +69,16 @@ public class Pet {
 
     private void updateBehavior(float screenWidth, float screenHeight, float delta) {
         previousState = currentState;
-
+        if (suppressAutoBehavior)
+            return;
         if (currentState == PetState.IDLE || currentState == PetState.BLINKING) {
-            if (Math.random() < 0.01) toggleBlink();
-            if (Math.random() < 0.002 && !isWalking) startRandomWalk(screenWidth, screenHeight);
+            if (Math.random() < 0.01)
+                toggleBlink();
+            if (Math.random() < 0.002 && !isWalking)
+                startRandomWalk(screenWidth, screenHeight);
         }
-
-        if (currentState == PetState.WALKING) updateWalking(delta);
+        if (currentState == PetState.WALKING)
+            updateWalking(delta);
     }
 
     private void toggleBlink() {
@@ -124,5 +138,26 @@ public class Pet {
 
     public void dispose() {
         animationManager.dispose();
+    }
+
+    public void manualMove(float dx, float dy, float screenWidth, float screenHeight, float delta) {
+        manualControl = true;
+        moving = (dx != 0 || dy != 0);
+        if (moving) {
+            currentState = PetState.WALKING;
+            float moveAmount = MANUAL_MOVE_SPEED * delta;
+            float newX = position.x + dx * moveAmount;
+            float newY = position.y + dy * moveAmount;
+            float spriteWidth = animationManager.get("IDLE").getKeyFrame(0).getRegionWidth();
+            float spriteHeight = animationManager.get("IDLE").getKeyFrame(0).getRegionHeight();
+            // Bounds check (centered drawing)
+            float halfW = spriteWidth * 0.3f / 2f;
+            float halfH = spriteHeight * 0.3f / 2f;
+            newX = Math.max(halfW, Math.min(screenWidth - halfW, newX));
+            newY = Math.max(halfH, Math.min(screenHeight - halfH, newY));
+            position.set(newX, newY);
+        } else {
+            currentState = PetState.IDLE;
+        }
     }
 }
