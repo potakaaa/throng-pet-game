@@ -15,11 +15,17 @@ public class PetStatsUI implements PetStatObserver {
     private final Table statusTable;
     private final Table buttonTable;
 
-    private final ProgressBar hungerBar;
-    private final ProgressBar happinessBar;
-    private final ProgressBar energyBar;
+    private ProgressBar hungerBar;
+    private ProgressBar happinessBar;
+    private ProgressBar energyBar;
 
     private final float MAX_STAT = 100f;
+
+    // Store styles for dynamic color change
+    private final ProgressBar.ProgressBarStyle hungerStyle;
+    private final ProgressBar.ProgressBarStyle happyStyle;
+    private final ProgressBar.ProgressBarStyle energyStyle;
+    private final Skin skin;
 
     public interface PetActionListener {
         void onFeed();
@@ -30,45 +36,56 @@ public class PetStatsUI implements PetStatObserver {
     }
 
     public PetStatsUI(Stage stage, Skin skin, PetActionListener listener) {
+        this.skin = skin;
+        // Create styles for dynamic color change
+        hungerStyle = createModernBarStyle(skin, Color.GREEN);
+        happyStyle = createModernBarStyle(skin, Color.GREEN);
+        energyStyle = createModernBarStyle(skin, Color.GREEN);
+
         statusTable = buildStatusTable(skin);
         buttonTable = buildButtonTable(skin, listener);
 
         Table layoutTable = new Table();
         layoutTable.setFillParent(true);
-        layoutTable.top().left().add(statusTable).expand().top().left().pad(20);
+        layoutTable.add(statusTable).expandX().expandY().top().center().padTop(8);
         layoutTable.row();
-        layoutTable.bottom().add(buttonTable).expandX().center().padBottom(40);
+        layoutTable.add(buttonTable).expandX().expandY().bottom().center().padBottom(10);
 
         stage.addActor(layoutTable);
-
-        // Initialize progress bar references
-        hungerBar = (ProgressBar) statusTable.getCells().get(1).getActor();
-        happinessBar = (ProgressBar) statusTable.getCells().get(3).getActor();
-        energyBar = (ProgressBar) statusTable.getCells().get(5).getActor();
     }
 
     private Table buildStatusTable(Skin skin) {
         Table table = new Table();
-        table.pad(15);
-        table.background(skin.newDrawable("white", new Color(0.1f, 0.1f, 0.1f, 0.7f)));
+        table.top().center();
 
-        // Create modern progress bar styles
-        ProgressBar.ProgressBarStyle hungerStyle = createModernBarStyle(skin, new Color(0.95f, 0.3f, 0.2f, 1f));
-        ProgressBar.ProgressBarStyle happyStyle = createModernBarStyle(skin, new Color(0.2f, 0.8f, 0.4f, 1f));
-        ProgressBar.ProgressBarStyle energyStyle = createModernBarStyle(skin, new Color(0.2f, 0.4f, 0.9f, 1f));
-
-        // Add labels with modern styling
+        // Small box size
+        int boxSize = 32;
+        int barWidth = 40; // Increased width
         Label.LabelStyle labelStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.WHITE);
-        labelStyle.font.getData().setScale(1.2f);
+        labelStyle.font.getData().setScale(1.1f);
 
-        table.add(new Label("Hunger:", labelStyle)).left().padBottom(15);
-        table.add(new ProgressBar(0, MAX_STAT, 1, false, hungerStyle)).width(200).height(20).padBottom(15).row();
+        // Create vertical progress bars
+        hungerBar = new ProgressBar(0, MAX_STAT, 1, true, hungerStyle);
+        happinessBar = new ProgressBar(0, MAX_STAT, 1, true, happyStyle);
+        energyBar = new ProgressBar(0, MAX_STAT, 1, true, energyStyle);
+        hungerBar.setValue(MAX_STAT);
+        happinessBar.setValue(MAX_STAT);
+        energyBar.setValue(MAX_STAT);
 
-        table.add(new Label("Happiness:", labelStyle)).left().padBottom(15);
-        table.add(new ProgressBar(0, MAX_STAT, 1, false, happyStyle)).width(200).height(20).padBottom(15).row();
+        // Overlay a single-letter label inside each box using Stack
+        Stack hungerStack = new Stack();
+        hungerStack.add(hungerBar);
+        hungerStack.add(new Label("F", labelStyle)); // F for Food
+        Stack happyStack = new Stack();
+        happyStack.add(happinessBar);
+        happyStack.add(new Label("H", labelStyle)); // H for Happiness
+        Stack energyStack = new Stack();
+        energyStack.add(energyBar);
+        energyStack.add(new Label("E", labelStyle)); // E for Energy
 
-        table.add(new Label("Energy:", labelStyle)).left().padBottom(15);
-        table.add(new ProgressBar(0, MAX_STAT, 1, false, energyStyle)).width(200).height(20).padBottom(15).row();
+        table.add(hungerStack).width(barWidth).height(boxSize).padRight(8);
+        table.add(happyStack).width(barWidth).height(boxSize).padRight(8);
+        table.add(energyStack).width(barWidth).height(boxSize);
 
         return table;
     }
@@ -92,7 +109,7 @@ public class PetStatsUI implements PetStatObserver {
 
     private Table buildButtonTable(Skin skin, PetActionListener listener) {
         Table table = new Table();
-        table.pad(15);
+        table.bottom().center();
 
         // Create modern button styles
         TextButton.TextButtonStyle feedStyle = createModernButtonStyle(skin, new Color(0.95f, 0.3f, 0.2f, 1f));
@@ -156,9 +173,24 @@ public class PetStatsUI implements PetStatObserver {
 
     @Override
     public void updateBars(float hunger, float happiness, float energy) {
+        updateBarColor(hungerBar, hunger, hungerStyle);
+        updateBarColor(happinessBar, happiness, happyStyle);
+        updateBarColor(energyBar, energy, energyStyle);
         hungerBar.setValue(hunger);
         happinessBar.setValue(happiness);
         energyBar.setValue(energy);
+    }
+
+    private void updateBarColor(ProgressBar bar, float value, ProgressBar.ProgressBarStyle style) {
+        Color color;
+        if (value > 66)
+            color = Color.GREEN;
+        else if (value > 33)
+            color = Color.YELLOW;
+        else
+            color = Color.RED;
+        style.knobBefore = skin.newDrawable("white", color);
+        bar.setStyle(style);
     }
 
     public Table getStatusTable() {
