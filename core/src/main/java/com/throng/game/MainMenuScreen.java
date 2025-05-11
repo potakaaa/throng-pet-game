@@ -9,7 +9,6 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
@@ -113,7 +112,6 @@ public class MainMenuScreen implements Screen {
         game.batch.begin();
         game.batch.draw(backgroundTexture, x, y, drawWidth, drawHeight);
         game.batch.end();
-        // --- End background draw ---
 
         // Draw UI
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
