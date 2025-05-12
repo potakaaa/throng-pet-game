@@ -1,6 +1,7 @@
 package com.throng.game.entity;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.throng.game.animation.AnimationManager;
 
@@ -139,6 +140,19 @@ public class Pet {
     public void dispose() {
         animationManager.dispose();
     }
+
+    public Rectangle getBounds() {
+        float width = getCurrentFrame().getRegionWidth() * 0.3f; // match petScale
+        float height = getCurrentFrame().getRegionHeight() * 0.3f;
+        return new Rectangle(position.x - width / 2, position.y - height / 2, width, height);
+    }
+
+    public void eat() {
+        hunger = Math.min(MAX_STAT, hunger + 20); // or whatever amount you want
+        currentState = PetState.EATING;
+        stateTime = 0;
+    }
+
 
     public void manualMove(float dx, float dy, float screenWidth, float screenHeight, float delta) {
         manualControl = true;
