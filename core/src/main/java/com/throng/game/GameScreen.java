@@ -53,13 +53,12 @@ public class GameScreen implements Screen {
         petStatsUI = new PetStatsUI(stage, skin, new PetStatsUI.PetActionListener() {
             @Override
             public void onFeed() {
-                    float angle = (float)(Math.random() * Math.PI * 2);
-                    float dropDistance = 200;
-                    Vector2 dropPos = new Vector2(
-                        pet.getPosition().x + (float)Math.cos(angle) * dropDistance,
-                        pet.getPosition().y + (float)Math.sin(angle) * dropDistance
-                    );
-                    fruits.add(new Fruit(dropPos));
+                float angle = (float) (Math.random() * Math.PI * 2);
+                float dropDistance = 200;
+                Vector2 dropPos = new Vector2(
+                        pet.getPosition().x + (float) Math.cos(angle) * dropDistance,
+                        pet.getPosition().y + (float) Math.sin(angle) * dropDistance);
+                fruits.add(new Fruit(dropPos));
             }
 
             @Override
@@ -79,9 +78,11 @@ public class GameScreen implements Screen {
 
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(stage);
-        multiplexer.addProcessor(new InputAdapter() {});
+        multiplexer.addProcessor(new InputAdapter() {
+        });
         Gdx.input.setInputProcessor(multiplexer);
     }
+
     private void checkFruitCollision() {
         for (int i = fruits.size - 1; i >= 0; i--) {
             Fruit fruit = fruits.get(i);
@@ -101,10 +102,22 @@ public class GameScreen implements Screen {
     private void update(float delta) {
         float dx = 0, dy = 0;
         boolean keyPressed = false;
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) { dy += 1; keyPressed = true; }
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) { dy -= 1; keyPressed = true; }
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) { dx -= 1; keyPressed = true; }
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) { dx += 1; keyPressed = true; }
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            dy += 1;
+            keyPressed = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            dy -= 1;
+            keyPressed = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            dx -= 1;
+            keyPressed = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            dx += 1;
+            keyPressed = true;
+        }
 
         if (keyPressed) {
             pet.manualMove(dx, dy, viewport.getWorldWidth(), viewport.getWorldHeight(), delta);
@@ -122,9 +135,8 @@ public class GameScreen implements Screen {
         for (Fruit fruit : fruits) {
             TextureRegion frame = fruit.getFrame();
             Vector2 pos = fruit.getPosition();
-            float width = frame.getRegionWidth();
-            float height = frame.getRegionHeight();
-            game.batch.draw(frame, pos.x - width / 2, pos.y - height / 2, width, height);
+            float size = fruit.getSize();
+            game.batch.draw(frame, pos.x - size / 2, pos.y - size / 2, size, size);
         }
     }
 
@@ -135,10 +147,8 @@ public class GameScreen implements Screen {
         float offsetY = 100f;
 
         petStatsUI.getFloatingGroup().setPosition(
-            petPos.x - petStatsUI.getFloatingGroup().getWidth() / 2f,
-            petPos.y + offsetY
-        );
-
+                petPos.x - petStatsUI.getFloatingGroup().getWidth() / 2f,
+                petPos.y + offsetY);
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -160,17 +170,27 @@ public class GameScreen implements Screen {
         stage.draw();
     }
 
-
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
         camera.position.set(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f, 0);
     }
 
-    @Override public void show() {}
-    @Override public void pause() {}
-    @Override public void resume() {}
-    @Override public void hide() {}
+    @Override
+    public void show() {
+    }
+
+    @Override
+    public void pause() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
+    @Override
+    public void hide() {
+    }
 
     @Override
     public void dispose() {
