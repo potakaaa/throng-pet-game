@@ -10,7 +10,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
@@ -21,6 +23,7 @@ public class MainMenuScreen implements Screen {
     private Stage stage;
 
     private Texture backgroundTexture;
+    private Texture logoTexture;
     private Texture playButtonDefault;
     private Texture playButtonHover;
     private Texture exitButtonDefault;
@@ -39,6 +42,7 @@ public class MainMenuScreen implements Screen {
 
         // Load assets
         backgroundTexture = new Texture(Gdx.files.internal("background/menuBG.jpg"));
+        logoTexture = new Texture(Gdx.files.internal("throngs_logo_text.png"));
         playButtonDefault = new Texture(Gdx.files.internal("buttons/Square/Play/Default.png"));
         playButtonHover = new Texture(Gdx.files.internal("buttons/Square/Play/Hover.png"));
         exitButtonDefault = new Texture(Gdx.files.internal("buttons/Square/Home/Default.png"));
@@ -54,6 +58,14 @@ public class MainMenuScreen implements Screen {
         table.setFillParent(true);
         stage.addActor(table);
 
+        Image logo = new Image(logoTexture);
+
+        float scale = 0.48f;
+        table.add(logo).center().padBottom(20)
+                .width(logoTexture.getWidth() * scale)
+                .height(logoTexture.getHeight() * scale);
+        table.row();
+
         // Create buttons with hover effects
         ImageButton playButton = new ImageButton(
                 new TextureRegionDrawable(playButtonDefault),
@@ -65,7 +77,7 @@ public class MainMenuScreen implements Screen {
 
         // Append to table with spacing
         table.add(playButton).width(100).height(100).padBottom(10);
-        table.row();
+        table.row(); // Add row after play button
         table.add(exitButton).width(100).height(100);
 
         // Listeners

@@ -32,7 +32,9 @@ public class PetStatsUI implements PetStatObserver {
 
     public interface PetActionListener {
         void onFeed();
+
         void onPlay();
+
         void onSleep();
     }
 
@@ -92,6 +94,7 @@ public class PetStatsUI implements PetStatObserver {
         table.add(hungerStack).width(barWidth).height(boxSize).padRight(8);
         table.add(happyStack).width(barWidth).height(boxSize).padRight(8);
         table.add(energyStack).width(barWidth).height(boxSize);
+        table.center();
 
         return table;
     }
@@ -125,13 +128,22 @@ public class PetStatsUI implements PetStatObserver {
         TextButton sleepButton = new TextButton("Sleep", sleepStyle);
 
         feedButton.addListener(new ChangeListener() {
-            @Override public void changed(ChangeEvent event, Actor actor) { listener.onFeed(); }
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                listener.onFeed();
+            }
         });
         playButton.addListener(new ChangeListener() {
-            @Override public void changed(ChangeEvent event, Actor actor) { listener.onPlay(); }
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                listener.onPlay();
+            }
         });
         sleepButton.addListener(new ChangeListener() {
-            @Override public void changed(ChangeEvent event, Actor actor) { listener.onSleep(); }
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                listener.onSleep();
+            }
         });
 
         table.add(feedButton).width(140).height(50).padRight(20);
@@ -188,7 +200,15 @@ public class PetStatsUI implements PetStatObserver {
         bar.setStyle(style);
     }
 
-    public Table getStatusTable() { return statusTable; }
-    public Table getActionButtonTable() { return buttonTable; }
-    public Group getFloatingGroup() { return floatingGroup; }
+    public Table getStatusTable() {
+        return statusTable;
+    }
+
+    public Table getActionButtonTable() {
+        return buttonTable;
+    }
+
+    public Group getFloatingGroup() {
+        return floatingGroup;
+    }
 }
