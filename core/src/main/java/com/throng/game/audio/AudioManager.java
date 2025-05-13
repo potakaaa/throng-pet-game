@@ -11,6 +11,7 @@ public class AudioManager {
     private Sound clickMenuSound;
     private Sound clickActionSound;
     private float volume = 0.5f;
+    private boolean isMuted = false;
 
     private AudioManager() {
         // Private constructor for singleton
@@ -54,8 +55,19 @@ public class AudioManager {
     public void setVolume(float volume) {
         this.volume = Math.max(0f, Math.min(1f, volume));
         if (backgroundMusic != null) {
-            backgroundMusic.setVolume(this.volume);
+            backgroundMusic.setVolume(isMuted ? 0f : this.volume);
         }
+    }
+
+    public void toggleMute() {
+        isMuted = !isMuted;
+        if (backgroundMusic != null) {
+            backgroundMusic.setVolume(isMuted ? 0f : volume);
+        }
+    }
+
+    public boolean isMuted() {
+        return isMuted;
     }
 
     public void pause() {

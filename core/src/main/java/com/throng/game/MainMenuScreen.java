@@ -28,6 +28,10 @@ public class MainMenuScreen implements Screen {
     private Texture playButtonHover;
     private Texture exitButtonDefault;
     private Texture exitButtonHover;
+    private Texture soundOnDefault;
+    private Texture soundOnHover;
+    private Texture soundOffDefault;
+    private Texture soundOffHover;
 
     public MainMenuScreen(ThrongGame game) {
         this.game = game;
@@ -47,6 +51,10 @@ public class MainMenuScreen implements Screen {
         playButtonHover = new Texture(Gdx.files.internal("buttons/Square/Play/Hover.png"));
         exitButtonDefault = new Texture(Gdx.files.internal("buttons/Square/Home/Default.png"));
         exitButtonHover = new Texture(Gdx.files.internal("buttons/Square/Home/Hover.png"));
+        soundOnDefault = new Texture(Gdx.files.internal("buttons/Square/SoundOn/Default.png"));
+        soundOnHover = new Texture(Gdx.files.internal("buttons/Square/SoundOn/Hover.png"));
+        soundOffDefault = new Texture(Gdx.files.internal("buttons/Square/SoundOff/Default.png"));
+        soundOffHover = new Texture(Gdx.files.internal("buttons/Square/SoundOff/Hover.png"));
 
         // UI elements
         createUI();
@@ -57,6 +65,25 @@ public class MainMenuScreen implements Screen {
         Table table = new Table();
         table.setFillParent(true);
         stage.addActor(table);
+
+        // Create sound toggle button
+        ImageButton soundButton = new ImageButton(
+                new TextureRegionDrawable(AudioManager.getInstance().isMuted() ? soundOffDefault : soundOnDefault),
+                new TextureRegionDrawable(AudioManager.getInstance().isMuted() ? soundOffHover : soundOnHover));
+        soundButton.setPosition(20, viewport.getWorldHeight() - 70);
+        soundButton.setSize(50, 50);
+        stage.addActor(soundButton);
+
+        soundButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                AudioManager.getInstance().toggleMute();
+                soundButton.getStyle().imageUp = new TextureRegionDrawable(
+                        AudioManager.getInstance().isMuted() ? soundOffDefault : soundOnDefault);
+                soundButton.getStyle().imageOver = new TextureRegionDrawable(
+                        AudioManager.getInstance().isMuted() ? soundOffHover : soundOnHover);
+            }
+        });
 
         Image logo = new Image(logoTexture);
 
@@ -159,6 +186,10 @@ public class MainMenuScreen implements Screen {
         playButtonHover.dispose();
         exitButtonDefault.dispose();
         exitButtonHover.dispose();
+        soundOnDefault.dispose();
+        soundOnHover.dispose();
+        soundOffDefault.dispose();
+        soundOffHover.dispose();
         stage.dispose();
     }
 }

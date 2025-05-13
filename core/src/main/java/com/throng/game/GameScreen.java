@@ -10,8 +10,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.throng.game.audio.AudioManager;
@@ -36,6 +40,10 @@ public class GameScreen implements Screen {
     private final DraggablePetActor draggablePet;
     private float timeSinceManualInput = 0f;
     private static final float AUTO_BEHAVIOR_TIMEOUT = 1.5f;
+    private Texture soundOnDefault;
+    private Texture soundOnHover;
+    private Texture soundOffDefault;
+    private Texture soundOffHover;
 
     public GameScreen(final ThrongGame game) {
         this.game = game;
@@ -48,6 +56,29 @@ public class GameScreen implements Screen {
 
         backgroundTexture = new Texture("background/Grass_Sample.png");
         skin = new Skin(Gdx.files.internal("skin/uiskin.json"));
+        soundOnDefault = new Texture(Gdx.files.internal("buttons/Square/SoundOn/Default.png"));
+        soundOnHover = new Texture(Gdx.files.internal("buttons/Square/SoundOn/Hover.png"));
+        soundOffDefault = new Texture(Gdx.files.internal("buttons/Square/SoundOff/Default.png"));
+        soundOffHover = new Texture(Gdx.files.internal("buttons/Square/SoundOff/Hover.png"));
+
+        // Create sound toggle button
+        ImageButton soundButton = new ImageButton(
+                new TextureRegionDrawable(AudioManager.getInstance().isMuted() ? soundOffDefault : soundOnDefault),
+                new TextureRegionDrawable(AudioManager.getInstance().isMuted() ? soundOffHover : soundOnHover));
+        soundButton.setPosition(20, viewport.getWorldHeight() - 70);
+        soundButton.setSize(50, 50);
+        stage.addActor(soundButton);
+
+        soundButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                AudioManager.getInstance().toggleMute();
+                soundButton.getStyle().imageUp = new TextureRegionDrawable(
+                        AudioManager.getInstance().isMuted() ? soundOffDefault : soundOnDefault);
+                soundButton.getStyle().imageOver = new TextureRegionDrawable(
+                        AudioManager.getInstance().isMuted() ? soundOffHover : soundOnHover);
+            }
+        });
 
         pet = new Pet(new Vector2(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f), null);
 
@@ -210,5 +241,9 @@ public class GameScreen implements Screen {
         skin.dispose();
         stage.dispose();
         pet.dispose();
+        soundOnDefault.dispose();
+        soundOnHover.dispose();
+        soundOffDefault.dispose();
+        soundOffHover.dispose();
     }
 }
