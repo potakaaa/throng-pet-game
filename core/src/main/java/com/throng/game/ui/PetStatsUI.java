@@ -23,13 +23,17 @@ public class PetStatsUI implements PetStatObserver {
     private ProgressBar hungerBar;
     private ProgressBar happinessBar;
     private ProgressBar energyBar;
+    private ProgressBar wellbeingBar;
     private final Group floatingGroup;
+
+    private final int barWidth = 12;
 
     private final float MAX_STAT = 100f;
 
     private final ProgressBar.ProgressBarStyle hungerStyle;
     private final ProgressBar.ProgressBarStyle happyStyle;
     private final ProgressBar.ProgressBarStyle energyStyle;
+    private final ProgressBar.ProgressBarStyle wellbeingStyle;
     private final Skin skin;
 
     public interface PetActionListener {
@@ -46,6 +50,7 @@ public class PetStatsUI implements PetStatObserver {
         hungerStyle = createModernBarStyle(Color.GREEN);
         happyStyle = createModernBarStyle(Color.GREEN);
         energyStyle = createModernBarStyle(Color.GREEN);
+        wellbeingStyle = createModernBarStyle(Color.GOLD);
 
         statusTable = buildStatusTable();
         buttonTable = buildButtonTable(listener);
@@ -70,16 +75,18 @@ public class PetStatsUI implements PetStatObserver {
         table.top().center();
 
         int boxSize = 32;
-        int barWidth = 40;
+        int barSpace = 45;
         Label.LabelStyle labelStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.WHITE);
         labelStyle.font.getData().setScale(1.1f);
 
         hungerBar = new ProgressBar(0, MAX_STAT, 1, true, hungerStyle);
         happinessBar = new ProgressBar(0, MAX_STAT, 1, true, happyStyle);
         energyBar = new ProgressBar(0, MAX_STAT, 1, true, energyStyle);
+        wellbeingBar = new ProgressBar(0, MAX_STAT, 1, true, wellbeingStyle);
         hungerBar.setValue(MAX_STAT);
         happinessBar.setValue(MAX_STAT);
         energyBar.setValue(MAX_STAT);
+        wellbeingBar.setValue(MAX_STAT);
 
         Stack hungerStack = new Stack();
         hungerStack.add(hungerBar);
@@ -93,23 +100,44 @@ public class PetStatsUI implements PetStatObserver {
         energyStack.add(energyBar);
         energyStack.add(new Label("E", labelStyle));
 
-        table.add(hungerStack).width(barWidth).height(boxSize).padRight(8);
-        table.add(happyStack).width(barWidth).height(boxSize).padRight(8);
-        table.add(energyStack).width(barWidth).height(boxSize);
+        Stack wellbeingStack = new Stack();
+        wellbeingStack.add(wellbeingBar);
+        wellbeingStack.add(new Label("W", labelStyle));
+
+
+        table.add(hungerStack).width(barSpace).height(boxSize).padRight(8);
+        table.add(happyStack).width(barSpace).height(boxSize).padRight(8);
+        table.add(energyStack).width(barSpace).height(boxSize).padRight(8);
+        table.add(wellbeingStack).width(barSpace).height(boxSize).padRight(8);
         table.center();
+
+        hungerBar.setWidth(barWidth); // or your desired width
+        hungerBar.setHeight(32); // optional for vertical bars
+
+        happinessBar.setWidth(barWidth);
+        happinessBar.setHeight(32);
+
+        energyBar.setWidth(barWidth);
+        energyBar.setHeight(32);
+
+        wellbeingBar.setWidth(barWidth);
+        wellbeingBar.setHeight(32);
 
         return table;
     }
-
     private ProgressBar.ProgressBarStyle createModernBarStyle(Color barColor) {
         ProgressBar.ProgressBarStyle style = new ProgressBar.ProgressBarStyle();
 
-        Pixmap bgPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        int barHeight = 1; // Only 1 pixel high (will be stretched by size)
+
+        // Background
+        Pixmap bgPixmap = new Pixmap(barWidth, barHeight, Pixmap.Format.RGBA8888);
         bgPixmap.setColor(new Color(0.2f, 0.2f, 0.2f, 0.8f));
         bgPixmap.fill();
         style.background = new TextureRegionDrawable(new TextureRegion(new Texture(bgPixmap)));
 
-        Pixmap knobPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        // Filled (knobBefore)
+        Pixmap knobPixmap = new Pixmap(barWidth, barHeight, Pixmap.Format.RGBA8888);
         knobPixmap.setColor(barColor);
         knobPixmap.fill();
         style.knobBefore = new TextureRegionDrawable(new TextureRegion(new Texture(knobPixmap)));
@@ -117,6 +145,7 @@ public class PetStatsUI implements PetStatObserver {
         style.knob = null;
         return style;
     }
+
 
     private Table buildButtonTable(PetActionListener listener) {
         Table table = new Table();
@@ -180,11 +209,13 @@ public class PetStatsUI implements PetStatObserver {
     }
 
     @Override
-    public void updateBars(float hunger, float happiness, float energy) {
+    public void updateBars(float hunger, float happiness, float energy, float wellbeing) {
         try {
             updateBarColor(hungerBar, hunger, hungerStyle);
             updateBarColor(happinessBar, happiness, happyStyle);
             updateBarColor(energyBar, energy, energyStyle);
+            updateBarColor(wellbeingBar, wellbeing, wellbeingStyle);
+            wellbeingBar.setValue(wellbeing);
             hungerBar.setValue(hunger);
             happinessBar.setValue(happiness);
             energyBar.setValue(energy);
@@ -195,12 +226,17 @@ public class PetStatsUI implements PetStatObserver {
 
     private void updateBarColor(ProgressBar bar, float value, ProgressBar.ProgressBarStyle style) {
         Color color = (value > 66) ? Color.GREEN : (value > 33) ? Color.YELLOW : Color.RED;
-        Pixmap knobPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+
+        int barHeight = 1;
+
+        Pixmap knobPixmap = new Pixmap(barWidth, barHeight, Pixmap.Format.RGBA8888);
         knobPixmap.setColor(color);
         knobPixmap.fill();
         style.knobBefore = new TextureRegionDrawable(new TextureRegion(new Texture(knobPixmap)));
+
         bar.setStyle(style);
     }
+
 
     public Table getStatusTable() {
         return statusTable;

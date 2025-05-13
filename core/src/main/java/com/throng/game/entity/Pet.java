@@ -23,7 +23,7 @@ public class Pet {
     private float stateTimer;
     private float stateDuration;
 
-    private float hunger, happiness, energy;
+    private float hunger, happiness, energy, wellbeing;
     private static final float MAX_STAT = 100f;
     private static final float BASE_DECAY_RATE = 1f;
 
@@ -54,6 +54,7 @@ public class Pet {
         this.hunger = MAX_STAT;
         this.happiness = MAX_STAT;
         this.energy = MAX_STAT;
+        this.wellbeing = MAX_STAT / 2f;
         this.stateTime = 0;
         this.stateTimer = 0;
         this.stateDuration = 0;
@@ -74,8 +75,10 @@ public class Pet {
 
         manualControl = false;
 
+        updateWellbeing(delta);
+
         if (statsObserver != null) {
-            statsObserver.updateBars(hunger, happiness, energy);
+            statsObserver.updateBars(hunger, happiness, energy, wellbeing);
         }
     }
 
@@ -110,6 +113,23 @@ public class Pet {
             stateDuration = 0;
         }
     }
+
+    private void updateWellbeing(float delta) {
+        float average = (hunger + happiness + energy) / 3f;
+
+        if (average >= 70f) {
+            wellbeing += 5f * delta; // gain if well maintained
+        } else if (average >= 40f) {
+            wellbeing += 1f * delta; // slow gain
+        } else if (average >= 20f) {
+            wellbeing -= 2f * delta; // slow drop
+        } else {
+            wellbeing -= 5f * delta; // bad neglect
+        }
+
+        wellbeing = Math.max(0f, Math.min(MAX_STAT, wellbeing));
+    }
+
 
     private boolean isInTimedAction() {
         return currentState == PetState.SLEEPING || currentState == PetState.EATING || currentState == PetState.PLAYING;
@@ -217,19 +237,15 @@ public class Pet {
         if (isInTimedAction())
             return;
 
-        startHunger = hunger;
-        startEnergy = energy;
-        startHappiness = happiness;
+        hunger = Math.min(hunger + 20, MAX_STAT);
 
-        hungerGain = Math.min(200, MAX_STAT - hunger);
-        happinessGain = Math.min(5, MAX_STAT - happiness);
-        energyGain = Math.min(5, MAX_STAT - energy);
-
+        // Also make sure updateBars() is called after this somewhere
         currentState = PetState.EATING;
         stateTime = 0;
         stateTimer = 0;
-        stateDuration = 0.2f;
+        stateDuration = 1f;
     }
+
 
     private void cancelTimedAction() {
         stateDuration = 0;
