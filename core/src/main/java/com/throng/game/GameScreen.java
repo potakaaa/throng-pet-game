@@ -157,12 +157,18 @@ public class GameScreen implements Screen {
         game.batch.begin();
         float bgWidth = backgroundTexture.getWidth();
         float bgHeight = backgroundTexture.getHeight();
-        float scale = viewport.getWorldHeight() / bgHeight;
-        float drawWidth = bgWidth * scale;
-        float drawHeight = bgHeight * scale;
-        float x = (viewport.getWorldWidth() - drawWidth) / 2f;
-        float y = 0f;
-        game.batch.draw(backgroundTexture, x, y, drawWidth, drawHeight);
+
+        int tilesX = (int) Math.ceil(viewport.getWorldWidth() / bgWidth) + 1;
+        int tilesY = (int) Math.ceil(viewport.getWorldHeight() / bgHeight) + 1;
+
+        for (int i = 0; i < tilesX; i++) {
+            for (int j = 0; j < tilesY; j++) {
+                float x = i * bgWidth;
+                float y = j * bgHeight;
+                game.batch.draw(backgroundTexture, x, y);
+            }
+        }
+
         drawFruits();
         game.batch.end();
 
