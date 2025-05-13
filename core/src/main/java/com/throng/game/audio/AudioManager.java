@@ -8,11 +8,16 @@ public class AudioManager {
     private static AudioManager instance;
     private Music backgroundMusic;
     private Sound eatingSound;
+    private Sound clickMenuSound;
+    private Sound clickActionSound;
     private float volume = 0.5f;
 
     private AudioManager() {
         // Private constructor for singleton
         eatingSound = Gdx.audio.newSound(Gdx.files.internal("sounds/eating-sound-effect.mp3"));
+        clickMenuSound = Gdx.audio.newSound(Gdx.files.internal("sounds/pop-clicking-effect.mp3"));
+        clickActionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/tap-clicking-effect.mp3"));
+
     }
 
     public static AudioManager getInstance() {
@@ -36,6 +41,14 @@ public class AudioManager {
 
     public void playEatingSound() {
         eatingSound.play(volume);
+    }
+
+    public void playClickMenuSound() {
+        clickMenuSound.play(volume);
+    }
+
+    public void playClickActionSound() {
+        clickActionSound.play(volume);
     }
 
     public void setVolume(float volume) {

@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.throng.game.audio.AudioManager;
 import com.throng.game.entity.PetStatObserver;
 import com.badlogic.gdx.utils.Align;
 
@@ -151,18 +152,21 @@ public class PetStatsUI implements PetStatObserver {
         feedButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                AudioManager.getInstance().playClickActionSound();
                 listener.onFeed();
             }
         });
         playButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                AudioManager.getInstance().playClickActionSound();
                 listener.onPlay();
             }
         });
         sleepButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                AudioManager.getInstance().playClickActionSound();
                 listener.onSleep();
             }
         });
