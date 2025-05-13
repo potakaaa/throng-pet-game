@@ -122,13 +122,30 @@ public class PetStatsUI implements PetStatObserver {
 
         // Load button textures
         Texture feedTexture = new Texture(Gdx.files.internal(("buthrongs/feed.png")));
+        Texture feedPressedTexture = new Texture(Gdx.files.internal(("buthrongs/feed_pressed.png")));
         Texture playTexture = new Texture(Gdx.files.internal("buthrongs/play.png"));
+        Texture playPressedTexture = new Texture(Gdx.files.internal("buthrongs/play_pressed.png"));
         Texture sleepTexture = new Texture(Gdx.files.internal("buthrongs/sleep.png"));
+        Texture sleepPressedTexture = new Texture(Gdx.files.internal("buthrongs/sleep_pressed.png"));
 
-        // Create image buttons
-        ImageButton feedButton = new ImageButton(new TextureRegionDrawable(new TextureRegion(feedTexture)));
-        ImageButton playButton = new ImageButton(new TextureRegionDrawable(new TextureRegion(playTexture)));
-        ImageButton sleepButton = new ImageButton(new TextureRegionDrawable(new TextureRegion(sleepTexture)));
+        // Create image buttons with pressed states
+        ImageButton.ImageButtonStyle feedStyle = new ImageButton.ImageButtonStyle();
+        feedStyle.imageUp = new TextureRegionDrawable(new TextureRegion(feedTexture));
+        feedStyle.imageDown = new TextureRegionDrawable(new TextureRegion(feedPressedTexture));
+        feedStyle.imageOver = new TextureRegionDrawable(new TextureRegion(feedPressedTexture));
+        ImageButton feedButton = new ImageButton(feedStyle);
+
+        ImageButton.ImageButtonStyle playStyle = new ImageButton.ImageButtonStyle();
+        playStyle.imageUp = new TextureRegionDrawable(new TextureRegion(playTexture));
+        playStyle.imageDown = new TextureRegionDrawable(new TextureRegion(playPressedTexture));
+        playStyle.imageOver = new TextureRegionDrawable(new TextureRegion(playPressedTexture));
+        ImageButton playButton = new ImageButton(playStyle);
+
+        ImageButton.ImageButtonStyle sleepStyle = new ImageButton.ImageButtonStyle();
+        sleepStyle.imageUp = new TextureRegionDrawable(new TextureRegion(sleepTexture));
+        sleepStyle.imageDown = new TextureRegionDrawable(new TextureRegion(sleepPressedTexture));
+        sleepStyle.imageOver = new TextureRegionDrawable(new TextureRegion(sleepPressedTexture));
+        ImageButton sleepButton = new ImageButton(sleepStyle);
 
         // Add listeners
         feedButton.addListener(new ChangeListener() {
