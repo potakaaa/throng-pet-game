@@ -5,12 +5,14 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class DraggablePetActor extends Actor {
     private final Pet pet;
     private final float scale = 0.3f;
     private boolean dragging = false;
     private float dragOffsetX, dragOffsetY;
+    private boolean facingLeft = false;
 
     public DraggablePetActor(Pet pet) {
         this.pet = pet;
@@ -61,15 +63,26 @@ public class DraggablePetActor extends Actor {
         if (!dragging) {
             Vector2 pos = pet.getPosition();
             setPosition(pos.x - getWidth() / 2f, pos.y - getHeight() / 2f);
+            setFacingLeft(pet.isFacingLeft());
         }
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
+        TextureRegion frame = pet.getCurrentFrame();
+        if (facingLeft) {
+            frame.flip(true, false);
+        }
         batch.draw(
-            pet.getCurrentFrame(),
-            getX(), getY(),
-            getWidth(), getHeight()
-        );
+                frame,
+                getX(), getY(),
+                getWidth(), getHeight());
+        if (facingLeft) {
+            frame.flip(true, false); // Flip back to avoid affecting other draws
+        }
+    }
+
+    public void setFacingLeft(boolean facingLeft) {
+        this.facingLeft = facingLeft;
     }
 }

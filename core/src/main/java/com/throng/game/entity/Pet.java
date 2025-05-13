@@ -14,6 +14,7 @@ public class Pet {
 
     private final Vector2 position;
     private final Vector2 targetPosition;
+    private boolean facingLeft = false;
 
     private PetState currentState;
     private PetState previousState;
@@ -159,6 +160,7 @@ public class Pet {
     private void updateWalking(float delta) {
         Vector2 direction = new Vector2(targetPosition).sub(position).nor();
         position.mulAdd(direction, WALK_SPEED * delta);
+        facingLeft = direction.x < 0;
 
         if (position.dst(targetPosition) < 5f) {
             isWalking = false;
@@ -245,6 +247,7 @@ public class Pet {
 
         if (moving) {
             currentState = PetState.WALKING;
+            facingLeft = dx < 0;
             float moveAmount = MANUAL_MOVE_SPEED * delta;
             float newX = position.x + dx * moveAmount;
             float newY = position.y + dy * moveAmount;
@@ -301,5 +304,9 @@ public class Pet {
 
     public void setStatsObserver(PetStatsUI statsObserver) {
         this.statsObserver = statsObserver;
+    }
+
+    public boolean isFacingLeft() {
+        return facingLeft;
     }
 }
