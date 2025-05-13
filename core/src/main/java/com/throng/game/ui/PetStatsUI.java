@@ -1,5 +1,6 @@
 package com.throng.game.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -119,14 +120,17 @@ public class PetStatsUI implements PetStatObserver {
     private Table buildButtonTable(PetActionListener listener) {
         Table table = new Table();
 
-        TextButton.TextButtonStyle feedStyle = createModernButtonStyle(new Color(0.95f, 0.3f, 0.2f, 1f));
-        TextButton.TextButtonStyle playStyle = createModernButtonStyle(new Color(0.2f, 0.8f, 0.4f, 1f));
-        TextButton.TextButtonStyle sleepStyle = createModernButtonStyle(new Color(0.2f, 0.4f, 0.9f, 1f));
+        // Load button textures
+        Texture feedTexture = new Texture(Gdx.files.internal(("buthrongs/feed.png")));
+        Texture playTexture = new Texture(Gdx.files.internal("buthrongs/play.png"));
+        Texture sleepTexture = new Texture(Gdx.files.internal("buthrongs/sleep.png"));
 
-        TextButton feedButton = new TextButton("Feed", feedStyle);
-        TextButton playButton = new TextButton("Play", playStyle);
-        TextButton sleepButton = new TextButton("Sleep", sleepStyle);
+        // Create image buttons
+        ImageButton feedButton = new ImageButton(new TextureRegionDrawable(new TextureRegion(feedTexture)));
+        ImageButton playButton = new ImageButton(new TextureRegionDrawable(new TextureRegion(playTexture)));
+        ImageButton sleepButton = new ImageButton(new TextureRegionDrawable(new TextureRegion(sleepTexture)));
 
+        // Add listeners
         feedButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -146,35 +150,12 @@ public class PetStatsUI implements PetStatObserver {
             }
         });
 
-        table.add(feedButton).width(140).height(50).padRight(20);
-        table.add(playButton).width(140).height(50).padRight(20);
-        table.add(sleepButton).width(140).height(50);
+        // Add buttons to table with appropriate sizing
+        table.add(feedButton).size(140).padRight(20);
+        table.add(playButton).size(140).padRight(20);
+        table.add(sleepButton).size(140);
 
         return table;
-    }
-
-    private TextButton.TextButtonStyle createModernButtonStyle(Color buttonColor) {
-        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
-
-        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixmap.setColor(buttonColor);
-        pixmap.fill();
-        Drawable up = new TextureRegionDrawable(new TextureRegion(new Texture(pixmap)));
-
-        Pixmap downPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        downPixmap.setColor(buttonColor.cpy().mul(0.8f));
-        downPixmap.fill();
-        Drawable down = new TextureRegionDrawable(new TextureRegion(new Texture(downPixmap)));
-
-        style.up = up;
-        style.down = down;
-        style.over = up;
-
-        style.font = skin.getFont("default-font");
-        style.font.getData().setScale(1.2f);
-        style.fontColor = Color.WHITE;
-
-        return style;
     }
 
     @Override
