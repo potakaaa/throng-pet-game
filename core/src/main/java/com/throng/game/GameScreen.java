@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.throng.game.audio.AudioManager;
 import com.throng.game.entity.DraggablePetActor;
 import com.throng.game.entity.Fruit;
 import com.throng.game.entity.Pet;
@@ -90,6 +91,7 @@ public class GameScreen implements Screen {
                 if (fruit != null && pet.getBounds().overlaps(fruit.getBounds())) {
                     fruit.touch();
                     pet.eat();
+                    AudioManager.getInstance().playEatingSound();
                     fruit.dispose();
                     fruits.removeIndex(i);
                 }
@@ -103,19 +105,19 @@ public class GameScreen implements Screen {
         float dx = 0, dy = 0;
         boolean keyPressed = false;
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            dy += 1;
+            dy += 0.7f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            dy -= 1;
+            dy -= 0.7f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            dx -= 1;
+            dx -= 0.7f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            dx += 1;
+            dx += 0.7f;
             keyPressed = true;
         }
 
@@ -184,18 +186,22 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
+
     }
 
     @Override
     public void pause() {
+        AudioManager.getInstance().pause();
     }
 
     @Override
     public void resume() {
+        AudioManager.getInstance().resume();
     }
 
     @Override
     public void hide() {
+        AudioManager.getInstance().pause();
     }
 
     @Override

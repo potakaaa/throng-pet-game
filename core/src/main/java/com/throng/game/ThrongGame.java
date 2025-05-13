@@ -33,4 +33,5 @@ public class ThrongGame extends Game {
         batch.dispose();
         assetManager.dispose();
     }
+
 }

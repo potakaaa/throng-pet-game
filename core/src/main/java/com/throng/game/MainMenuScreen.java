@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.throng.game.audio.AudioManager;
 
 public class MainMenuScreen implements Screen {
     private final ThrongGame game;
@@ -84,7 +85,6 @@ public class MainMenuScreen implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 game.setScreen(new GameScreen(game));
-                dispose();
             }
         });
 
@@ -98,6 +98,7 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void show() {
+        AudioManager.getInstance().playBackgroundMusic("sounds/game-music-loop.mp3");
     }
 
     @Override
@@ -137,10 +138,12 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void pause() {
+        AudioManager.getInstance().pause();
     }
 
     @Override
     public void resume() {
+        AudioManager.getInstance().resume();
     }
 
     @Override
