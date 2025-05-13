@@ -12,7 +12,6 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
@@ -33,7 +32,7 @@ public class MainMenuScreen implements Screen {
         this.game = game;
 
         camera = new OrthographicCamera();
-        viewport = new FitViewport(640, 480, camera);
+        viewport = new FitViewport(1280, 720, camera);
         camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
         // UI Stage

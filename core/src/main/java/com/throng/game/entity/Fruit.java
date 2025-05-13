@@ -7,14 +7,21 @@ import com.badlogic.gdx.math.Rectangle;
 
 public class Fruit {
     private static final float SIZE = 64f;
+    private static final float COLLISION_SIZE = 64f;
+    private static final float SCREEN_WIDTH = 1280f;
+    private static final float SCREEN_HEIGHT = 720f;
+    private static final float PADDING = 100f;
     private final Vector2 position;
     private final Texture texture;
     private final TextureRegion textureRegion;
     private Runnable onTouchCallback;
 
     public Fruit(Vector2 position) {
-        this.position = position;
-        this.texture = new Texture("apple/apple_default.png"); // Add your fruit texture
+        // screen bounds with padding
+        float x = Math.max(SIZE / 2 + PADDING, Math.min(SCREEN_WIDTH - SIZE / 2 - PADDING, position.x));
+        float y = Math.max(SIZE / 2 + PADDING, Math.min(SCREEN_HEIGHT - SIZE / 2 - PADDING, position.y));
+        this.position = new Vector2(x, y);
+        this.texture = new Texture("apple/apple_default.png");
         this.textureRegion = new TextureRegion(texture);
     }
 
@@ -27,7 +34,8 @@ public class Fruit {
     }
 
     public Rectangle getBounds() {
-        return new Rectangle(position.x - SIZE / 2, position.y - SIZE / 2, SIZE, SIZE);
+        return new Rectangle(position.x - COLLISION_SIZE / 2, position.y - COLLISION_SIZE / 2, COLLISION_SIZE,
+                COLLISION_SIZE);
     }
 
     public TextureRegion getFrame() {

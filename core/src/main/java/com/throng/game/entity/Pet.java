@@ -79,7 +79,8 @@ public class Pet {
     }
 
     private void handleTimedActions() {
-        if (!isInTimedAction()) return;
+        if (!isInTimedAction())
+            return;
 
         float t = Math.min(stateTimer / stateDuration, 1f);
 
@@ -136,14 +137,18 @@ public class Pet {
 
     private void updateBehavior(float screenWidth, float screenHeight, float delta) {
         previousState = currentState;
-        if (suppressAutoBehavior) return;
+        if (suppressAutoBehavior)
+            return;
 
         if (currentState == PetState.IDLE || currentState == PetState.BLINKING) {
-            if (Math.random() < 0.01) toggleBlink();
-            if (Math.random() < 0.002 && !isWalking) startRandomWalk(screenWidth, screenHeight);
+            if (Math.random() < 0.01)
+                toggleBlink();
+            if (Math.random() < 0.002 && !isWalking)
+                startRandomWalk(screenWidth, screenHeight);
         }
 
-        if (currentState == PetState.WALKING) updateWalking(delta);
+        if (currentState == PetState.WALKING)
+            updateWalking(delta);
     }
 
     private void toggleBlink() {
@@ -175,7 +180,8 @@ public class Pet {
     }
 
     public void play() {
-        if (isInTimedAction()) return;
+        if (isInTimedAction())
+            return;
 
         startHappiness = happiness;
         startEnergy = energy;
@@ -190,7 +196,8 @@ public class Pet {
     }
 
     public void sleep() {
-        if (isInTimedAction()) return;
+        if (isInTimedAction())
+            return;
 
         startEnergy = energy;
         startHunger = hunger;
@@ -205,7 +212,8 @@ public class Pet {
     }
 
     public void eat() {
-        if (isInTimedAction()) return;
+        if (isInTimedAction())
+            return;
 
         startHunger = hunger;
         startEnergy = energy;
@@ -229,7 +237,8 @@ public class Pet {
     }
 
     public void manualMove(float dx, float dy, float screenWidth, float screenHeight, float delta) {
-        if (isInTimedAction()) cancelTimedAction();
+        if (isInTimedAction())
+            cancelTimedAction();
 
         manualControl = true;
         moving = (dx != 0 || dy != 0);
@@ -273,7 +282,13 @@ public class Pet {
     public Rectangle getBounds() {
         float width = getCurrentFrame().getRegionWidth() * 0.3f;
         float height = getCurrentFrame().getRegionHeight() * 0.3f;
-        return new Rectangle(position.x - width / 2, position.y - height / 2, width, height);
+        float collisionWidth = width / 3f;
+        float collisionHeight = height / 3f;
+        return new Rectangle(
+                position.x - collisionWidth / 2,
+                position.y - collisionHeight / 2,
+                collisionWidth,
+                collisionHeight);
     }
 
     public Vector2 getPosition() {
