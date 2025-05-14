@@ -20,8 +20,9 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.throng.game.audio.AudioManager;
 import com.throng.game.entity.DraggablePetActor;
-import com.throng.game.entity.Fruit;
+import com.throng.game.entity.fruits.Fruit;
 import com.throng.game.entity.Pet;
+import com.throng.game.entity.fruits.FruitFactory;
 import com.throng.game.ui.PetStatsUI;
 import com.badlogic.gdx.utils.Array;
 
@@ -90,7 +91,7 @@ public class GameScreen implements Screen {
                 Vector2 dropPos = new Vector2(
                         pet.getPosition().x + (float) Math.cos(angle) * dropDistance,
                         pet.getPosition().y + (float) Math.sin(angle) * dropDistance);
-                fruits.add(new Fruit(dropPos));
+                fruits.add(FruitFactory.createRandomFruit(dropPos, pet));
             }
 
             @Override
@@ -121,7 +122,7 @@ public class GameScreen implements Screen {
             try {
                 if (fruit != null && pet.getBounds().overlaps(fruit.getBounds())) {
                     fruit.touch();
-                    pet.eat();
+                    fruit.applyEffect();
                     AudioManager.getInstance().playEatingSound();
                     fruit.dispose();
                     fruits.removeIndex(i);

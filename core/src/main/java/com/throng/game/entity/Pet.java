@@ -260,21 +260,23 @@ public class Pet {
         stateDuration = 60f;
     }
 
-    public void eat() {
+    public void eat(float hungerBoost, float happinessBoost, float energyBoost, float duration) {
         if (isDead()) return;
+        if (isInTimedAction()) return;
 
-        if (isInTimedAction())
-            return;
+        startHunger = hunger;
+        startHappiness = happiness;
+        startEnergy = energy;
 
-        hunger = Math.min(hunger + 20, MAX_STAT);
+        hungerGain = Math.min(hungerBoost, MAX_STAT - hunger);
+        happinessGain = Math.min(happinessBoost, MAX_STAT - happiness);
+        energyGain = Math.min(energyBoost, MAX_STAT - energy);
 
-        // Also make sure updateBars() is called after this somewhere
         currentState = PetState.EATING;
         stateTime = 0;
         stateTimer = 0;
-        stateDuration = 1f;
+        stateDuration = duration;
     }
-
 
     private void cancelTimedAction() {
         stateDuration = 0;
