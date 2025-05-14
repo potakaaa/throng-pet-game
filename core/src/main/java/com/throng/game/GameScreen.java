@@ -102,7 +102,7 @@ public class GameScreen implements Screen {
             public void onSleep() {
                 pet.sleep();
             }
-        });
+        }, game);
         pet.setStatsObserver(petStatsUI);
 
         draggablePet = new DraggablePetActor(pet);
@@ -207,6 +207,7 @@ public class GameScreen implements Screen {
 
         stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         stage.draw();
+
     }
 
     @Override

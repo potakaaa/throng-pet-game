@@ -12,6 +12,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.throng.game.MainMenuScreen;
+import com.throng.game.ThrongGame;
 import com.throng.game.audio.AudioManager;
 import com.throng.game.entity.PetStatObserver;
 import com.badlogic.gdx.utils.Align;
@@ -19,6 +21,7 @@ import com.badlogic.gdx.utils.Align;
 public class PetStatsUI implements PetStatObserver {
     private final Table statusTable;
     private final Table buttonTable;
+    private final ThrongGame game;
 
     private ProgressBar hungerBar;
     private ProgressBar happinessBar;
@@ -44,9 +47,9 @@ public class PetStatsUI implements PetStatObserver {
         void onSleep();
     }
 
-    public PetStatsUI(Stage stage, Skin skin, PetActionListener listener) {
+    public PetStatsUI(Stage stage, Skin skin, PetActionListener listener, ThrongGame game) {
         this.skin = skin;
-
+        this.game = game;
         hungerStyle = createModernBarStyle(Color.GREEN);
         happyStyle = createModernBarStyle(Color.GREEN);
         energyStyle = createModernBarStyle(Color.GREEN);
@@ -222,6 +225,42 @@ public class PetStatsUI implements PetStatObserver {
         } catch (Exception e) {
             System.err.println("[UI ERROR] updateBars crashed: " + e.getMessage());
         }
+    }
+
+    private boolean isDead = false;
+
+    public void onPetDied() {
+        if (isDead) return;
+        isDead = true;
+
+        buttonTable.setVisible(false);
+
+        // Table for centered death message and button
+        Table deathTable = new Table();
+        deathTable.setFillParent(true);
+        deathTable.center();
+
+        Label.LabelStyle labelStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.RED);
+        Label deathLabel = new Label("Your pet has died", labelStyle);
+        deathLabel.setFontScale(1.4f);
+
+        TextButton mainMenuButton = new TextButton("Main Menu", skin);
+        mainMenuButton.getLabel().setFontScale(1.2f);
+
+        deathTable.add(deathLabel).padBottom(20).row();
+        deathTable.add(mainMenuButton).width(200).height(60);
+
+        floatingGroup.addActor(deathTable); // Or add to stage directly if needed
+
+        mainMenuButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                AudioManager.getInstance().playClickActionSound();
+                game.setScreen(new MainMenuScreen(game));
+            }
+        });
+
+        floatingGroup.toFront(); // Ensure it's rendered on top
     }
 
     private void updateBarColor(ProgressBar bar, float value, ProgressBar.ProgressBarStyle style) {

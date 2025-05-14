@@ -9,7 +9,7 @@ import com.throng.game.ui.PetStatsUI;
 public class Pet {
 
     public enum PetState {
-        IDLE, WALKING, BLINKING, SLEEPING, EATING, PLAYING
+        IDLE, WALKING, BLINKING, SLEEPING, EATING, PLAYING, DEAD
     }
 
     private final Vector2 position;
@@ -61,6 +61,10 @@ public class Pet {
     }
 
     public void update(float delta, float screenWidth, float screenHeight) {
+        if (currentState == PetState.DEAD) {
+            return;
+        }
+
         stateTime += delta;
         stateTimer += delta;
 
@@ -128,6 +132,25 @@ public class Pet {
         }
 
         wellbeing = Math.max(0f, Math.min(MAX_STAT, wellbeing));
+
+        if (wellbeing == 0f) {
+            die();
+        }
+    }
+    private void die() {
+        cancelTimedAction();
+        isWalking = false;
+        manualControl = false;
+        currentState = PetState.DEAD;
+        stateTime = 0;
+
+        if (statsObserver != null) {
+            statsObserver.onPetDied();
+        }
+    }
+
+    public boolean isDead() {
+        return currentState == PetState.DEAD;
     }
 
 
@@ -202,6 +225,8 @@ public class Pet {
     }
 
     public void play() {
+        if (isDead()) return;
+
         if (isInTimedAction())
             return;
 
@@ -218,6 +243,8 @@ public class Pet {
     }
 
     public void sleep() {
+        if (isDead()) return;
+
         if (isInTimedAction())
             return;
 
@@ -234,6 +261,8 @@ public class Pet {
     }
 
     public void eat() {
+        if (isDead()) return;
+
         if (isInTimedAction())
             return;
 
