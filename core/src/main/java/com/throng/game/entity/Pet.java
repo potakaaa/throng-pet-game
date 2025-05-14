@@ -264,19 +264,16 @@ public class Pet {
         if (isDead()) return;
         if (isInTimedAction()) return;
 
-        startHunger = hunger;
-        startHappiness = happiness;
-        startEnergy = energy;
-
-        hungerGain = Math.min(hungerBoost, MAX_STAT - hunger);
-        happinessGain = Math.min(happinessBoost, MAX_STAT - happiness);
-        energyGain = Math.min(energyBoost, MAX_STAT - energy);
+        hunger = Math.min(hunger + hungerBoost, MAX_STAT);
+        happiness = Math.min(happiness + happinessBoost, MAX_STAT);
+        energy = Math.min(energy + energyBoost, MAX_STAT);
 
         currentState = PetState.EATING;
         stateTime = 0;
-        stateTimer = 0;
-        stateDuration = duration;
+
+        currentState = PetState.IDLE;
     }
+
 
     private void cancelTimedAction() {
         stateDuration = 0;
