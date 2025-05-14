@@ -94,27 +94,35 @@ public class Pet {
 
         switch (currentState) {
             case EATING:
-                hunger = startHunger + hungerGain * t;
-                happiness = startHappiness + happinessGain * t;
-                energy = startEnergy + energyGain * t;
+                hunger = Math.min(MAX_STAT, startHunger + hungerGain * t);
+                happiness = Math.min(MAX_STAT, startHappiness + happinessGain * t);
+                energy = Math.min(MAX_STAT, startEnergy + energyGain * t);
                 break;
 
             case SLEEPING:
-                energy = startEnergy + energyGain * t;
+                energy = Math.min(MAX_STAT, startEnergy + energyGain * t);
                 // hunger & happiness freeze — handled in decayStats()
                 break;
 
             case PLAYING:
-                happiness = startHappiness + happinessGain * t;
+                happiness = Math.min(MAX_STAT, startHappiness + happinessGain * t);
                 // energy & hunger decay faster — handled in decayStats()
                 break;
         }
 
-        if (stateTimer >= stateDuration) {
+        if (stateTimer >= stateDuration && currentState != PetState.EATING) {
             currentState = PetState.IDLE;
             stateTime = 0;
             stateTimer = 0;
             stateDuration = 0;
+        } else if (stateTimer >= stateDuration) {
+            // For eating, we want to ensure the animation completes
+            if (stateTime >= animationManager.get("EATING").getAnimationDuration()) {
+                currentState = PetState.IDLE;
+                stateTime = 0;
+                stateTimer = 0;
+                stateDuration = 0;
+            }
         }
     }
 
@@ -227,8 +235,7 @@ public class Pet {
     public void play() {
         if (isDead()) return;
 
-        if (isInTimedAction())
-            return;
+        cancelTimedAction();
 
         startHappiness = happiness;
         startEnergy = energy;
@@ -245,8 +252,7 @@ public class Pet {
     public void sleep() {
         if (isDead()) return;
 
-        if (isInTimedAction())
-            return;
+        cancelTimedAction();
 
         startEnergy = energy;
         startHunger = hunger;
@@ -262,16 +268,21 @@ public class Pet {
 
     public void eat(float hungerBoost, float happinessBoost, float energyBoost, float duration) {
         if (isDead()) return;
-        if (isInTimedAction()) return;
+        
+        cancelTimedAction();
 
-        hunger = Math.min(hunger + hungerBoost, MAX_STAT);
-        happiness = Math.min(happiness + happinessBoost, MAX_STAT);
-        energy = Math.min(energy + energyBoost, MAX_STAT);
+        startHunger = hunger;
+        startHappiness = happiness;
+        startEnergy = energy;
+
+        hungerGain = hungerBoost;
+        happinessGain = happinessBoost;
+        energyGain = energyBoost;
 
         currentState = PetState.EATING;
         stateTime = 0;
-
-        currentState = PetState.IDLE;
+        stateTimer = 0;
+        stateDuration = duration;
     }
 
 

@@ -14,7 +14,7 @@ public class BananaFruit extends Fruit {
 
     @Override
     public void applyEffect() {
-        // Boost happiness +20, no hunger/energy, short duration
-        pet.eat(20f, 20f, 0f, 1f);
+        // Boost happiness +20, no hunger/energy
+        pet.eat(20f, 20f, 0f, 2.1f); // Duration matches animation length (7 frames * 0.3s)
     }
 }

@@ -12,12 +12,12 @@ public class AnimationManager {
     private final HashMap<String, Animation<TextureRegion>> animations = new HashMap<>();
 
     public AnimationManager() {
-        animations.put("IDLE", loadAnimation("sprite/Idle", 18, 0.1f));
-        animations.put("BLINKING", loadAnimation("sprite/Idle Blinking", 18, 0.1f));
-        animations.put("WALKING", loadAnimation("sprite/Walking", 18, 0.1f));
-        animations.put("SLEEPING", loadAnimation("sprite/Hurt", 11, 0.1f));
-        animations.put("PLAYING", loadAnimation("sprite/Slashing Air", 11, 0.1f, "Slashing in The Air"));
-        animations.put("EATING", loadAnimation("sprite/Throwing Air", 11, 0.1f, "Throwing in The Air"));
+        animations.put("IDLE", loadAnimation("sprite/Idle", 8, 0.25f));
+        animations.put("BLINKING", loadAnimation("sprite/Idle Blinking", 3, 0.2f));
+        animations.put("WALKING", loadAnimation("sprite/Walking", 4, 0.2f));
+        animations.put("SLEEPING", loadAnimation("sprite/Sleeping", 3, 0.3f));
+        animations.put("PLAYING", loadAnimation("sprite/Blinking", 5, 0.2f, "Blinking"));
+        animations.put("EATING", loadAnimation("sprite/Eating", 7, 0.3f, "Eating"));
     }
 
     private Animation<TextureRegion> loadAnimation(String folderPath, int frameCount, float frameDuration) {
@@ -33,7 +33,7 @@ public class AnimationManager {
 
         for (int i = 0; i < frameCount; i++) {
             String index = String.format("%03d", i);
-            String filePath = folderPath + "/0_Dark_Oracle_" + baseName + "_" + index + ".png";
+            String filePath = folderPath + "/0_Throng_" + baseName + "_" + index + ".png";
             Texture texture = new Texture(Gdx.files.internal(filePath));
             frames.add(new TextureRegion(texture));
         }
