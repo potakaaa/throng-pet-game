@@ -35,7 +35,7 @@ public class GameScreen implements Screen {
     private final Viewport viewport;
     private final Stage gameStage; // for game world elements
     private final Stage uiStage;   // for UI elements
-    
+
     // Make world much larger and use simple dimensions
     private static final float WORLD_WIDTH = 4000f;
     private static final float WORLD_HEIGHT = 4000f;
@@ -95,23 +95,20 @@ public class GameScreen implements Screen {
         petStatsUI = new PetStatsUI(uiStage, skin, new PetStatsUI.PetActionListener() {
             @Override
             public void onFeed() {
-                
+
                 float minSpawnDistance = 200f;
                 float maxSpawnDistance = 400f;
-                
+
                 float angle = (float) (Math.random() * Math.PI * 2);
                 float distance = minSpawnDistance + (float) Math.random() * (maxSpawnDistance - minSpawnDistance);
-                
+
                 float dropX = pet.getPosition().x + (float) Math.cos(angle) * distance;
                 float dropY = pet.getPosition().y + (float) Math.sin(angle) * distance;
-                
+
                 Vector2 dropPos = new Vector2(dropX, dropY);
                 Fruit fruit = FruitFactory.createRandomFruit(dropPos, pet);
                 fruits.add(fruit);
-                
-                // Debug info
-                Gdx.app.log("Fruit Spawn", String.format("Spawned fruit at: (%.0f, %.0f), Distance from pet: %.0f",
-                    dropX, dropY, dropPos.dst(pet.getPosition())));
+
             }
 
             @Override
@@ -194,15 +191,15 @@ public class GameScreen implements Screen {
             TextureRegion frame = fruit.getFrame();
             Vector2 pos = fruit.getPosition();
             float size = fruit.getSize() * 1.2f; // Reduced from 1.5f to 1.2f (20% larger instead of 50%)
-            
+
             // Draw the fruit
-            game.batch.draw(frame, 
+            game.batch.draw(frame,
                 pos.x - size / 2,  // Center the fruit on its position
                 pos.y - size / 2,  // Center the fruit on its position
                 size,              // Width
                 size               // Height
             );
-            
+
             // Debug log for fruit positions
             Gdx.app.log("Fruit Position", String.format("Fruit at: (%.0f, %.0f)", pos.x, pos.y));
         }
@@ -213,7 +210,7 @@ public class GameScreen implements Screen {
         float rightBound = camera.position.x + viewport.getWorldWidth() / 2f;
         float bottomBound = camera.position.y - viewport.getWorldHeight() / 2f;
         float topBound = camera.position.y + viewport.getWorldHeight() / 2f;
-        
+
         return position.x >= leftBound && position.x <= rightBound &&
                position.y >= bottomBound && position.y <= topBound;
     }
@@ -222,10 +219,10 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         update(delta);
         Vector2 petPos = pet.getPosition();
-        
+
         // Update UI positions to follow camera
         float uiOffsetY = 100f;
-        
+
         // Convert world position to screen position for floating stats
         Vector3 screenPos = camera.project(new Vector3(petPos.x, petPos.y, 0));
         petStatsUI.getFloatingGroup().setPosition(
@@ -239,25 +236,25 @@ public class GameScreen implements Screen {
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        
+
         // Draw background tiles
         float startX = camera.position.x - viewport.getWorldWidth() / 2f;
         float startY = camera.position.y - viewport.getWorldHeight() / 2f;
         float endX = startX + viewport.getWorldWidth();
         float endY = startY + viewport.getWorldHeight();
-        
+
         float bgWidth = backgroundTexture.getWidth();
         float bgHeight = backgroundTexture.getHeight();
-        
+
         int startTileX = (int) Math.floor(startX / bgWidth);
         int startTileY = (int) Math.floor(startY / bgHeight);
         int endTileX = (int) Math.ceil(endX / bgWidth);
         int endTileY = (int) Math.ceil(endY / bgHeight);
-        
+
         for (int x = startTileX; x <= endTileX; x++) {
             for (int y = startTileY; y <= endTileY; y++) {
-                game.batch.draw(backgroundTexture, 
-                    x * bgWidth, 
+                game.batch.draw(backgroundTexture,
+                    x * bgWidth,
                     y * bgHeight);
             }
         }
@@ -272,9 +269,6 @@ public class GameScreen implements Screen {
         // Render UI
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         uiStage.draw();
-
-        // Debug: Print number of active fruits
-        Gdx.app.log("Fruit Count", "Active fruits: " + fruits.size);
     }
 
     @Override

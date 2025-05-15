@@ -222,7 +222,7 @@ public class Pet {
 
     public void startRandomWalk(float screenWidth, float screenHeight) {
         float padding = 50f;
-        
+
         targetPosition.x = padding + (float) Math.random() * (screenWidth - 2 * padding);
         targetPosition.y = padding + (float) Math.random() * (screenHeight - 2 * padding);
 
@@ -267,22 +267,21 @@ public class Pet {
 
     public void eat(float hungerBoost, float happinessBoost, float energyBoost, float duration) {
         if (isDead()) return;
-        
+
         cancelTimedAction();
 
-        startHunger = hunger;
-        startHappiness = happiness;
-        startEnergy = energy;
-
-        hungerGain = hungerBoost;
-        happinessGain = happinessBoost;
-        energyGain = energyBoost;
+        hunger = Math.min(MAX_STAT, hunger + hungerBoost);
+        happiness = Math.min(MAX_STAT, happiness + happinessBoost);
+        energy = Math.min(MAX_STAT, energy + energyBoost);
 
         currentState = PetState.EATING;
         stateTime = 0;
+
+        // Set a short duration just for animation effect
         stateTimer = 0;
-        stateDuration = duration;
+        stateDuration = 1f; // or even 0.5f for brief effect
     }
+
 
 
     private void cancelTimedAction() {
