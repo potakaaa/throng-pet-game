@@ -156,11 +156,11 @@ public class GameScreen implements Screen {
         float dx = 0, dy = 0;
         boolean keyPressed = false;
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            dy += 0.7f;
+            dy += 0.5f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            dy -= 0.7f;
+            dy -= 0.5f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
