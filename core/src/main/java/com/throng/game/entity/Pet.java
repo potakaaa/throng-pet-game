@@ -145,6 +145,7 @@ public class Pet {
             die();
         }
     }
+
     private void die() {
         cancelTimedAction();
         isWalking = false;
@@ -160,7 +161,6 @@ public class Pet {
     public boolean isDead() {
         return currentState == PetState.DEAD;
     }
-
 
     private boolean isInTimedAction() {
         return currentState == PetState.SLEEPING || currentState == PetState.EATING || currentState == PetState.PLAYING;
@@ -222,7 +222,7 @@ public class Pet {
 
     public void startRandomWalk(float screenWidth, float screenHeight) {
         float padding = 50f;
-        
+
         targetPosition.x = padding + (float) Math.random() * (screenWidth - 2 * padding);
         targetPosition.y = padding + (float) Math.random() * (screenHeight - 2 * padding);
 
@@ -232,7 +232,8 @@ public class Pet {
     }
 
     public void play() {
-        if (isDead()) return;
+        if (isDead())
+            return;
 
         cancelTimedAction();
 
@@ -249,7 +250,8 @@ public class Pet {
     }
 
     public void sleep() {
-        if (isDead()) return;
+        if (isDead())
+            return;
 
         cancelTimedAction();
 
@@ -266,8 +268,9 @@ public class Pet {
     }
 
     public void eat(float hungerBoost, float happinessBoost, float energyBoost, float duration) {
-        if (isDead()) return;
-        
+        if (isDead())
+            return;
+
         cancelTimedAction();
 
         startHunger = hunger;
@@ -283,7 +286,6 @@ public class Pet {
         stateTimer = 0;
         stateDuration = duration;
     }
-
 
     private void cancelTimedAction() {
         stateDuration = 0;
@@ -358,5 +360,21 @@ public class Pet {
 
     public boolean isFacingLeft() {
         return facingLeft;
+    }
+
+    public float getHunger() {
+        return hunger;
+    }
+
+    public float getHappiness() {
+        return happiness;
+    }
+
+    public float getEnergy() {
+        return energy;
+    }
+
+    public float getWellbeing() {
+        return wellbeing;
     }
 }

@@ -104,7 +104,6 @@ public class PetStatsUI implements PetStatObserver {
         wellbeingStack.add(wellbeingBar);
         wellbeingStack.add(new Label("W", labelStyle));
 
-
         table.add(hungerStack).width(barSpace).height(boxSize).padRight(8);
         table.add(happyStack).width(barSpace).height(boxSize).padRight(8);
         table.add(energyStack).width(barSpace).height(boxSize).padRight(8);
@@ -125,6 +124,7 @@ public class PetStatsUI implements PetStatObserver {
 
         return table;
     }
+
     private ProgressBar.ProgressBarStyle createModernBarStyle(Color barColor) {
         ProgressBar.ProgressBarStyle style = new ProgressBar.ProgressBarStyle();
 
@@ -145,7 +145,6 @@ public class PetStatsUI implements PetStatObserver {
         style.knob = null;
         return style;
     }
-
 
     private Table buildButtonTable(PetActionListener listener) {
         Table table = new Table();
@@ -201,6 +200,7 @@ public class PetStatsUI implements PetStatObserver {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 AudioManager.getInstance().playClickActionSound();
+                AudioManager.getInstance().playSleepingSound();
                 listener.onSleep();
             }
         });
@@ -227,7 +227,8 @@ public class PetStatsUI implements PetStatObserver {
     private boolean isDead = false;
 
     public void onPetDied() {
-        if (isDead) return;
+        if (isDead)
+            return;
         isDead = true;
 
         buttonTable.setVisible(false);
@@ -272,7 +273,6 @@ public class PetStatsUI implements PetStatObserver {
 
         bar.setStyle(style);
     }
-
 
     public Table getStatusTable() {
         return statusTable;
