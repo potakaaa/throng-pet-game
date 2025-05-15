@@ -16,6 +16,7 @@ public class AudioManager {
     private Sound highStatThrongSound; // For when stats are high
     private Sound statChangeThrongSound; // For significant stat changes
     private Sound sleepingSound;
+    private long sleepingSoundId = -1; // Track the sleeping sound instance
     private float volume = 0.5f;
     private boolean isMuted = false;
     private boolean isSleeping = false;
@@ -82,13 +83,21 @@ public class AudioManager {
         if (isSleeping) {
             sleepSoundTimer += delta;
             if (sleepSoundTimer >= sleepSoundDuration) {
-                isSleeping = false;
-                sleepSoundTimer = 0f;
-                // Restore normal background music volume
-                if (backgroundMusic != null) {
-                    backgroundMusic.setVolume(isMuted ? 0f : NORMAL_BG_VOLUME);
-                }
+                stopSleepingSound();
             }
+        }
+    }
+
+    public void stopSleepingSound() {
+        if (sleepingSoundId != -1) {
+            sleepingSound.stop(sleepingSoundId);
+            sleepingSoundId = -1;
+        }
+        isSleeping = false;
+        sleepSoundTimer = 0f;
+        // Restore normal background music volume
+        if (backgroundMusic != null) {
+            backgroundMusic.setVolume(isMuted ? 0f : NORMAL_BG_VOLUME);
         }
     }
 
@@ -142,13 +151,19 @@ public class AudioManager {
     }
 
     public void playSleepingSound() {
+        // Stop any existing sleeping sound
+        if (sleepingSoundId != -1) {
+            sleepingSound.stop(sleepingSoundId);
+        }
+
         // Lower background music volume
         if (backgroundMusic != null) {
             backgroundMusic.setVolume(isMuted ? 0f : SLEEPING_BG_VOLUME);
         }
 
         // Play sleeping sound at higher volume
-        sleepingSound.play(SLEEPING_SOUND_VOLUME);
+        sleepingSoundId = sleepingSound.play(SLEEPING_SOUND_VOLUME);
+        sleepingSound.setLooping(sleepingSoundId, true); // Make the lullaby loop
         isSleeping = true;
         sleepSoundTimer = 0f;
         sleepSoundDuration = 5f; // Duration of the sleeping sound in seconds

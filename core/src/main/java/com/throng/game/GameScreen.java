@@ -280,9 +280,6 @@ public class GameScreen implements Screen {
         // Render UI
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         uiStage.draw();
-
-        // Debug: Print number of active fruits
-        Gdx.app.log("Fruit Count", "Active fruits: " + fruits.size);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.throng.game.animation.AnimationManager;
 import com.throng.game.ui.PetStatsUI;
+import com.throng.game.audio.AudioManager;
 
 public class Pet {
 
@@ -199,8 +200,13 @@ public class Pet {
                 startRandomWalk(screenWidth, screenHeight);
         }
 
-        if (currentState == PetState.WALKING)
+        if (currentState == PetState.WALKING) {
+            // Stop sleeping sound if we were sleeping
+            if (previousState == PetState.SLEEPING) {
+                AudioManager.getInstance().stopSleepingSound();
+            }
             updateWalking(delta);
+        }
     }
 
     private void toggleBlink() {
@@ -221,6 +227,11 @@ public class Pet {
     }
 
     public void startRandomWalk(float screenWidth, float screenHeight) {
+        // Stop sleeping sound if we were sleeping
+        if (currentState == PetState.SLEEPING) {
+            AudioManager.getInstance().stopSleepingSound();
+        }
+
         float padding = 50f;
 
         targetPosition.x = padding + (float) Math.random() * (screenWidth - 2 * padding);
@@ -273,18 +284,16 @@ public class Pet {
 
         cancelTimedAction();
 
-        startHunger = hunger;
-        startHappiness = happiness;
-        startEnergy = energy;
-
-        hungerGain = hungerBoost;
-        happinessGain = happinessBoost;
-        energyGain = energyBoost;
+        hunger = Math.min(MAX_STAT, hunger + hungerBoost);
+        happiness = Math.min(MAX_STAT, happiness + happinessBoost);
+        energy = Math.min(MAX_STAT, energy + energyBoost);
 
         currentState = PetState.EATING;
         stateTime = 0;
+
+        // Set a short duration just for animation effect
         stateTimer = 0;
-        stateDuration = duration;
+        stateDuration = 1f; // or even 0.5f for brief effect
     }
 
     private void cancelTimedAction() {
@@ -295,8 +304,17 @@ public class Pet {
     }
 
     public void manualMove(float dx, float dy, float screenWidth, float screenHeight, float delta) {
-        if (isInTimedAction())
+        // Check if we were sleeping before cancelling the action
+        boolean wasSleeping = currentState == PetState.SLEEPING;
+
+        if (isInTimedAction()) {
             cancelTimedAction();
+        }
+
+        // Stop sleeping sound if we were sleeping
+        if (wasSleeping) {
+            AudioManager.getInstance().stopSleepingSound();
+        }
 
         manualControl = true;
         moving = (dx != 0 || dy != 0);
