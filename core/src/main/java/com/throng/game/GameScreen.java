@@ -25,13 +25,21 @@ import com.throng.game.entity.Pet;
 import com.throng.game.entity.fruits.FruitFactory;
 import com.throng.game.ui.PetStatsUI;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.math.Vector3;
 
 public class GameScreen implements Screen {
     private final ThrongGame game;
 
     private final OrthographicCamera camera;
     private final Viewport viewport;
-    private final Stage stage;
+    private final Stage gameStage; // for game world elements
+    private final Stage uiStage;   // for UI elements
+    
+    // Make world much larger and use simple dimensions
+    private static final float WORLD_WIDTH = 4000f;
+    private static final float WORLD_HEIGHT = 4000f;
+    private static final float WORLD_PADDING = 50f;
 
     private final Texture backgroundTexture;
     private final Skin skin;
@@ -51,9 +59,11 @@ public class GameScreen implements Screen {
 
         camera = new OrthographicCamera();
         viewport = new ScreenViewport(camera);
-        camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
+        camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
 
-        stage = new Stage(viewport, game.batch);
+        // Create separate stages for game and UI
+        gameStage = new Stage(viewport, game.batch);
+        uiStage = new Stage(new ScreenViewport(), game.batch);
 
         backgroundTexture = new Texture("background/Grass_Sample.png");
         skin = new Skin(Gdx.files.internal("skin/uiskin.json"));
@@ -66,9 +76,9 @@ public class GameScreen implements Screen {
         ImageButton soundButton = new ImageButton(
                 new TextureRegionDrawable(AudioManager.getInstance().isMuted() ? soundOffDefault : soundOnDefault),
                 new TextureRegionDrawable(AudioManager.getInstance().isMuted() ? soundOffHover : soundOnHover));
-        soundButton.setPosition(20, viewport.getWorldHeight() - 70);
+        soundButton.setPosition(20, Gdx.graphics.getHeight() - 70);
         soundButton.setSize(50, 50);
-        stage.addActor(soundButton);
+        uiStage.addActor(soundButton);
 
         soundButton.addListener(new ChangeListener() {
             @Override
@@ -81,17 +91,27 @@ public class GameScreen implements Screen {
             }
         });
 
-        pet = new Pet(new Vector2(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f), null);
-
-        petStatsUI = new PetStatsUI(stage, skin, new PetStatsUI.PetActionListener() {
+        pet = new Pet(new Vector2(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f), null);
+        petStatsUI = new PetStatsUI(uiStage, skin, new PetStatsUI.PetActionListener() {
             @Override
             public void onFeed() {
+                
+                float minSpawnDistance = 200f;
+                float maxSpawnDistance = 400f;
+                
                 float angle = (float) (Math.random() * Math.PI * 2);
-                float dropDistance = 200;
-                Vector2 dropPos = new Vector2(
-                        pet.getPosition().x + (float) Math.cos(angle) * dropDistance,
-                        pet.getPosition().y + (float) Math.sin(angle) * dropDistance);
-                fruits.add(FruitFactory.createRandomFruit(dropPos, pet));
+                float distance = minSpawnDistance + (float) Math.random() * (maxSpawnDistance - minSpawnDistance);
+                
+                float dropX = pet.getPosition().x + (float) Math.cos(angle) * distance;
+                float dropY = pet.getPosition().y + (float) Math.sin(angle) * distance;
+                
+                Vector2 dropPos = new Vector2(dropX, dropY);
+                Fruit fruit = FruitFactory.createRandomFruit(dropPos, pet);
+                fruits.add(fruit);
+                
+                // Debug info
+                Gdx.app.log("Fruit Spawn", String.format("Spawned fruit at: (%.0f, %.0f), Distance from pet: %.0f",
+                    dropX, dropY, dropPos.dst(pet.getPosition())));
             }
 
             @Override
@@ -107,12 +127,11 @@ public class GameScreen implements Screen {
         pet.setStatsObserver(petStatsUI);
 
         draggablePet = new DraggablePetActor(pet);
-        stage.addActor(draggablePet);
+        gameStage.addActor(draggablePet);
 
         InputMultiplexer multiplexer = new InputMultiplexer();
-        multiplexer.addProcessor(stage);
-        multiplexer.addProcessor(new InputAdapter() {
-        });
+        multiplexer.addProcessor(uiStage);
+        multiplexer.addProcessor(gameStage);
         Gdx.input.setInputProcessor(multiplexer);
     }
 
@@ -154,67 +173,115 @@ public class GameScreen implements Screen {
         }
 
         if (keyPressed) {
-            pet.manualMove(dx, dy, viewport.getWorldWidth(), viewport.getWorldHeight(), delta);
+            pet.manualMove(dx, dy, WORLD_WIDTH, WORLD_HEIGHT, delta);
             timeSinceManualInput = 0f;
         } else {
             timeSinceManualInput += delta;
         }
         pet.suppressAutoBehavior = (!keyPressed && timeSinceManualInput < AUTO_BEHAVIOR_TIMEOUT);
-        pet.update(delta, viewport.getWorldWidth(), viewport.getWorldHeight());
+        pet.update(delta, WORLD_WIDTH, WORLD_HEIGHT);
         checkFruitCollision();
 
+        // Simple camera following
+        Vector2 petPos = pet.getPosition();
+        camera.position.x = petPos.x;
+        camera.position.y = petPos.y;
     }
 
     private void drawFruits() {
+        // Draw fruits after background but before UI
         for (Fruit fruit : fruits) {
             TextureRegion frame = fruit.getFrame();
             Vector2 pos = fruit.getPosition();
-            float size = fruit.getSize();
-            game.batch.draw(frame, pos.x - size / 2, pos.y - size / 2, size, size);
+            float size = fruit.getSize() * 1.2f; // Reduced from 1.5f to 1.2f (20% larger instead of 50%)
+            
+            // Draw the fruit
+            game.batch.draw(frame, 
+                pos.x - size / 2,  // Center the fruit on its position
+                pos.y - size / 2,  // Center the fruit on its position
+                size,              // Width
+                size               // Height
+            );
+            
+            // Debug log for fruit positions
+            Gdx.app.log("Fruit Position", String.format("Fruit at: (%.0f, %.0f)", pos.x, pos.y));
         }
+    }
+
+    private boolean isPositionVisible(Vector2 position) {
+        float leftBound = camera.position.x - viewport.getWorldWidth() / 2f;
+        float rightBound = camera.position.x + viewport.getWorldWidth() / 2f;
+        float bottomBound = camera.position.y - viewport.getWorldHeight() / 2f;
+        float topBound = camera.position.y + viewport.getWorldHeight() / 2f;
+        
+        return position.x >= leftBound && position.x <= rightBound &&
+               position.y >= bottomBound && position.y <= topBound;
     }
 
     @Override
     public void render(float delta) {
         update(delta);
         Vector2 petPos = pet.getPosition();
-        float offsetY = 100f;
-
+        
+        // Update UI positions to follow camera
+        float uiOffsetY = 100f;
+        
+        // Convert world position to screen position for floating stats
+        Vector3 screenPos = camera.project(new Vector3(petPos.x, petPos.y, 0));
         petStatsUI.getFloatingGroup().setPosition(
-                petPos.x - petStatsUI.getFloatingGroup().getWidth() / 2f,
-                petPos.y + offsetY);
+                screenPos.x - petStatsUI.getFloatingGroup().getWidth() / 2f,
+                screenPos.y + uiOffsetY);
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Render game world
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
+        
+        // Draw background tiles
+        float startX = camera.position.x - viewport.getWorldWidth() / 2f;
+        float startY = camera.position.y - viewport.getWorldHeight() / 2f;
+        float endX = startX + viewport.getWorldWidth();
+        float endY = startY + viewport.getWorldHeight();
+        
         float bgWidth = backgroundTexture.getWidth();
         float bgHeight = backgroundTexture.getHeight();
-
-        int tilesX = (int) Math.ceil(viewport.getWorldWidth() / bgWidth) + 1;
-        int tilesY = (int) Math.ceil(viewport.getWorldHeight() / bgHeight) + 1;
-
-        for (int i = 0; i < tilesX; i++) {
-            for (int j = 0; j < tilesY; j++) {
-                float x = i * bgWidth;
-                float y = j * bgHeight;
-                game.batch.draw(backgroundTexture, x, y);
+        
+        int startTileX = (int) Math.floor(startX / bgWidth);
+        int startTileY = (int) Math.floor(startY / bgHeight);
+        int endTileX = (int) Math.ceil(endX / bgWidth);
+        int endTileY = (int) Math.ceil(endY / bgHeight);
+        
+        for (int x = startTileX; x <= endTileX; x++) {
+            for (int y = startTileY; y <= endTileY; y++) {
+                game.batch.draw(backgroundTexture, 
+                    x * bgWidth, 
+                    y * bgHeight);
             }
         }
 
-        drawFruits();
+        drawFruits();  // Draw fruits after background
         game.batch.end();
 
-        stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
-        stage.draw();
+        // Render game actors
+        gameStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
+        gameStage.draw();
 
+        // Render UI
+        uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
+        uiStage.draw();
+
+        // Debug: Print number of active fruits
+        Gdx.app.log("Fruit Count", "Active fruits: " + fruits.size);
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
-        camera.position.set(viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f, 0);
+        uiStage.getViewport().update(width, height, true);
+        camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0);
     }
 
     @Override
@@ -241,7 +308,8 @@ public class GameScreen implements Screen {
     public void dispose() {
         backgroundTexture.dispose();
         skin.dispose();
-        stage.dispose();
+        gameStage.dispose();
+        uiStage.dispose();
         pet.dispose();
         soundOnDefault.dispose();
         soundOnHover.dispose();

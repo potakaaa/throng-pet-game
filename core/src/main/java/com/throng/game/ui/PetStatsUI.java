@@ -62,15 +62,12 @@ public class PetStatsUI implements PetStatObserver {
         floatingGroup.addActor(statusTable);
         stage.addActor(floatingGroup);
 
-        Table bottomTable = new Table();
-        bottomTable.setFillParent(true);
-        bottomTable.align(Align.bottom); // <-- Important
-
-        bottomTable.row(); // new row
-        bottomTable.add(buttonTable).center().padBottom(16);
-
-        stage.addActor(bottomTable);
-
+        // Create a container for the button table
+        Table bottomContainer = new Table();
+        bottomContainer.setFillParent(true);
+        bottomContainer.bottom();
+        bottomContainer.add(buttonTable).padBottom(20);
+        stage.addActor(bottomContainer);
     }
 
     private Table buildStatusTable() {
@@ -180,6 +177,11 @@ public class PetStatsUI implements PetStatObserver {
         sleepStyle.imageOver = new TextureRegionDrawable(new TextureRegion(sleepPressedTexture));
         ImageButton sleepButton = new ImageButton(sleepStyle);
 
+        // Add buttons to table with original large size and spacing
+        table.add(feedButton).size(140).padRight(20);
+        table.add(playButton).size(140).padRight(20);
+        table.add(sleepButton).size(140);
+
         // Add listeners
         feedButton.addListener(new ChangeListener() {
             @Override
@@ -202,11 +204,6 @@ public class PetStatsUI implements PetStatObserver {
                 listener.onSleep();
             }
         });
-
-        // Add buttons to table with appropriate sizing
-        table.add(feedButton).size(140).padRight(20);
-        table.add(playButton).size(140).padRight(20);
-        table.add(sleepButton).size(140);
 
         return table;
     }

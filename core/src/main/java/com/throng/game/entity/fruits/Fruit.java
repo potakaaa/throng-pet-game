@@ -8,9 +8,6 @@ import com.badlogic.gdx.math.Vector2;
 public abstract class Fruit {
     protected static final float SIZE = 64f;
     protected static final float COLLISION_SIZE = 64f;
-    protected static final float SCREEN_WIDTH = 1280f;
-    protected static final float SCREEN_HEIGHT = 720f;
-    protected static final float PADDING = 100f;
 
     protected final Vector2 position;
     protected final Texture texture;
@@ -18,9 +15,7 @@ public abstract class Fruit {
     protected Runnable onTouchCallback;
 
     public Fruit(Vector2 position, String texturePath) {
-        float x = Math.max(SIZE / 2 + PADDING, Math.min(SCREEN_WIDTH - SIZE / 2 - PADDING, position.x));
-        float y = Math.max(SIZE / 2 + PADDING, Math.min(SCREEN_HEIGHT - SIZE / 2 - PADDING, position.y));
-        this.position = new Vector2(x, y);
+        this.position = new Vector2(position);
         this.texture = new Texture(texturePath);
         this.textureRegion = new TextureRegion(texture);
     }

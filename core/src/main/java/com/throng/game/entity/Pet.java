@@ -221,11 +221,10 @@ public class Pet {
     }
 
     public void startRandomWalk(float screenWidth, float screenHeight) {
-        float paddingX = screenWidth * 0.2f;
-        float paddingY = screenHeight * 0.2f;
-
-        targetPosition.x = paddingX + (float) Math.random() * (screenWidth - 2 * paddingX);
-        targetPosition.y = paddingY + (float) Math.random() * (screenHeight - 2 * paddingY);
+        float padding = 50f;
+        
+        targetPosition.x = padding + (float) Math.random() * (screenWidth - 2 * padding);
+        targetPosition.y = padding + (float) Math.random() * (screenHeight - 2 * padding);
 
         isWalking = true;
         currentState = PetState.WALKING;
@@ -307,14 +306,10 @@ public class Pet {
             float newX = position.x + dx * moveAmount;
             float newY = position.y + dy * moveAmount;
 
-            float spriteWidth = animationManager.get("IDLE").getKeyFrame(0).getRegionWidth();
-            float spriteHeight = animationManager.get("IDLE").getKeyFrame(0).getRegionHeight();
-
-            float halfW = spriteWidth * 0.3f / 2f;
-            float halfH = spriteHeight * 0.3f / 2f;
-
-            newX = Math.max(halfW, Math.min(screenWidth - halfW, newX));
-            newY = Math.max(halfH, Math.min(screenHeight - halfH, newY));
+            // Simple boundary check with fixed padding
+            float padding = 50f;
+            newX = Math.max(padding, Math.min(screenWidth - padding, newX));
+            newY = Math.max(padding, Math.min(screenHeight - padding, newY));
 
             position.set(newX, newY);
         } else {
