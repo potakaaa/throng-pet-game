@@ -63,6 +63,8 @@ public class Pet extends Entity {
     @Override
     public void update(float delta, float worldWidth, float worldHeight) {
         if (currentState == PetState.DEAD) {
+            // Only update the animation time for dying animation
+            stateTime += delta;
             return;
         }
 
@@ -128,36 +130,48 @@ public class Pet extends Entity {
     }
 
     private void updateWellbeing(float delta) {
+        if (currentState == PetState.DEAD)
+            return;
+
         float average = (hunger + happiness + energy) / 3f;
 
         if (average >= 70f) {
-            wellbeing += 5f * delta; // gain if well maintained
+            wellbeing += 2f * delta; // Reduced gain rate
         } else if (average >= 40f) {
-            wellbeing += 1f * delta; // slow gain
+            wellbeing += 0.5f * delta; // Reduced gain rate
         } else if (average >= 20f) {
-            wellbeing -= 2f * delta; // slow drop
+            wellbeing -= 2f * delta;
         } else {
-            wellbeing -= 5f * delta; // bad neglect
+            wellbeing -= 5f * delta;
         }
 
         wellbeing = Math.max(0f, Math.min(MAX_STAT, wellbeing));
 
-        if (wellbeing == 0f) {
+        // Check for death conditions
+        if (wellbeing <= 0f) {
             die();
         }
     }
 
     @Override
     protected void die() {
-        super.die();
-        cancelTimedAction();
-        isWalking = false;
-        manualControl = false;
-        currentState = PetState.DEAD;
-        stateTime = 0;
+        if (currentState != PetState.DEAD) { // Only die if not already dead
+            super.die();
+            cancelTimedAction();
+            isWalking = false;
+            manualControl = false;
+            currentState = PetState.DEAD;
+            stateTime = 0;
 
-        if (statsObserver != null) {
-            statsObserver.onPetDied();
+            // Set all stats to 0 when dead
+            hunger = 0f;
+            happiness = 0f;
+            energy = 0f;
+            wellbeing = 0f;
+
+            if (statsObserver != null) {
+                statsObserver.onPetDied();
+            }
         }
     }
 
@@ -170,6 +184,9 @@ public class Pet extends Entity {
     }
 
     private void decayStats(float delta) {
+        if (currentState == PetState.DEAD)
+            return;
+
         switch (currentState) {
             case SLEEPING:
                 // hunger & happiness frozen
@@ -187,6 +204,11 @@ public class Pet extends Entity {
                 happiness = Math.max(happiness - BASE_DECAY_RATE * delta, 0);
                 energy = Math.max(energy - BASE_DECAY_RATE * delta, 0);
                 break;
+        }
+
+        // Check for death conditions after decay
+        if (hunger <= 0f || happiness <= 0f || energy <= 0f) {
+            die();
         }
     }
 
@@ -341,8 +363,20 @@ public class Pet extends Entity {
 
     @Override
     public TextureRegion getCurrentFrame() {
-        if (animationManager.get(currentState.toString()) != null) {
-            return animationManager.get(currentState.toString()).getKeyFrame(stateTime);
+        if (currentState == PetState.DEAD) {
+            // For dying animation, we want to play it once and then stay on the last frame
+            TextureRegion frame = animationManager.get("DEAD").getKeyFrame(stateTime, false);
+            if (frame == null) {
+                // If animation is done, return the last frame
+                return animationManager.get("DEAD").getKeyFrames()[animationManager.get("DEAD").getKeyFrames().length
+                        - 1];
+            }
+            return frame;
+        }
+
+        String animationName = currentState.toString();
+        if (animationManager.get(animationName) != null) {
+            return animationManager.get(animationName).getKeyFrame(stateTime);
         } else if (animationManager.get("IDLE") != null) {
             return animationManager.get("IDLE").getKeyFrame(stateTime);
         } else {
