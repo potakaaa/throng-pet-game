@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
@@ -19,7 +18,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.throng.game.audio.AudioManager;
-import com.throng.game.entity.DraggablePetActor;
 import com.throng.game.entity.fruits.Fruit;
 import com.throng.game.entity.Pet;
 import com.throng.game.entity.fruits.FruitFactory;
@@ -27,6 +25,9 @@ import com.throng.game.ui.PetStatsUI;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.math.Vector3;
+import com.throng.game.entity.Enemy;
+import com.throng.game.entity.EnemyManager;
+import com.badlogic.gdx.InputAdapter;
 
 public class GameScreen implements Screen {
     private final ThrongGame game;
@@ -46,13 +47,15 @@ public class GameScreen implements Screen {
     private final Array<Fruit> fruits = new Array<>();
     private final Pet pet;
     private final PetStatsUI petStatsUI;
-    private final DraggablePetActor draggablePet;
     private float timeSinceManualInput = 0f;
     private static final float AUTO_BEHAVIOR_TIMEOUT = 1.5f;
     private Texture soundOnDefault;
     private Texture soundOnHover;
     private Texture soundOffDefault;
     private Texture soundOffHover;
+    private final EnemyManager enemyManager;
+    private static final float ENEMY_CLICK_DAMAGE = 25f; // Amount of damage dealt when clicking an enemy
+    private static final float ENEMY_TAP_DAMAGE = 25f; // Amount of damage dealt when tapping an enemy
 
     public GameScreen(final ThrongGame game) {
         this.game = game;
@@ -60,6 +63,10 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         viewport = new ScreenViewport(camera);
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
+
+        // Initialize audio managers
+        AudioManager.getInstance();  // Ensure main audio manager is initialized
+        com.throng.game.audio.EnemySoundManager.getInstance();  // Ensure enemy sound manager is initialized
 
         // Create separate stages for game and UI
         gameStage = new Stage(viewport, game.batch);
@@ -92,10 +99,10 @@ public class GameScreen implements Screen {
         });
 
         pet = new Pet(new Vector2(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f), null);
+        enemyManager = new EnemyManager(pet, fruits);
         petStatsUI = new PetStatsUI(uiStage, skin, new PetStatsUI.PetActionListener() {
             @Override
             public void onFeed() {
-
                 float minSpawnDistance = 200f;
                 float maxSpawnDistance = 400f;
 
@@ -108,10 +115,6 @@ public class GameScreen implements Screen {
                 Vector2 dropPos = new Vector2(dropX, dropY);
                 Fruit fruit = FruitFactory.createRandomFruit(dropPos, pet);
                 fruits.add(fruit);
-
-                // Debug info
-                Gdx.app.log("Fruit Spawn", String.format("Spawned fruit at: (%.0f, %.0f), Distance from pet: %.0f",
-                        dropX, dropY, dropPos.dst(pet.getPosition())));
             }
 
             @Override
@@ -126,12 +129,17 @@ public class GameScreen implements Screen {
         }, game);
         pet.setStatsObserver(petStatsUI);
 
-        draggablePet = new DraggablePetActor(pet);
-        gameStage.addActor(draggablePet);
-
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);
         multiplexer.addProcessor(gameStage);
+        multiplexer.addProcessor(new InputAdapter() {
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                Vector3 worldCoords = camera.unproject(new Vector3(screenX, screenY, 0));
+                checkEnemyTap(worldCoords.x, worldCoords.y);
+                return true;
+            }
+        });
         Gdx.input.setInputProcessor(multiplexer);
     }
 
@@ -156,11 +164,11 @@ public class GameScreen implements Screen {
         float dx = 0, dy = 0;
         boolean keyPressed = false;
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            dy += 0.5f;
+            dy += 0.7f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            dy -= 0.5f;
+            dy -= 0.7f;
             keyPressed = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -180,6 +188,18 @@ public class GameScreen implements Screen {
         }
         pet.suppressAutoBehavior = (!keyPressed && timeSinceManualInput < AUTO_BEHAVIOR_TIMEOUT);
         pet.update(delta, WORLD_WIDTH, WORLD_HEIGHT);
+        enemyManager.update(delta, WORLD_WIDTH, WORLD_HEIGHT);
+
+        // Update and check fruits
+        for (int i = fruits.size - 1; i >= 0; i--) {
+            Fruit fruit = fruits.get(i);
+            fruit.update(delta);
+            if (fruit.isExpired()) {
+                fruit.dispose();
+                fruits.removeIndex(i);
+            }
+        }
+
         checkFruitCollision();
 
         // Simple camera following
@@ -193,18 +213,20 @@ public class GameScreen implements Screen {
         for (Fruit fruit : fruits) {
             TextureRegion frame = fruit.getFrame();
             Vector2 pos = fruit.getPosition();
-            float size = fruit.getSize() * 1.2f; // Reduced from 1.5f to 1.2f (20% larger instead of 50%)
+            float size = fruit.getSize() * 1.2f;
+
+            // Skip drawing if fruit is blinking and in invisible phase
+            if (fruit.shouldBlink()) {
+                continue;
+            }
 
             // Draw the fruit
             game.batch.draw(frame,
-                    pos.x - size / 2, // Center the fruit on its position
-                    pos.y - size / 2, // Center the fruit on its position
-                    size, // Width
-                    size // Height
+                    pos.x - size / 2,
+                    pos.y - size / 2,
+                    size,
+                    size
             );
-
-            // Debug log for fruit positions
-            Gdx.app.log("Fruit Position", String.format("Fruit at: (%.0f, %.0f)", pos.x, pos.y));
         }
     }
 
@@ -216,6 +238,19 @@ public class GameScreen implements Screen {
 
         return position.x >= leftBound && position.x <= rightBound &&
                 position.y >= bottomBound && position.y <= topBound;
+    }
+
+    private void checkEnemyTap(float worldX, float worldY) {
+        Vector2 tapLocation = new Vector2(worldX, worldY);
+        Array<Enemy> enemies = enemyManager.getEnemies();
+
+        for (Enemy enemy : enemies) {
+            if (!enemy.isDead() && enemy.getBounds().contains(tapLocation.x, tapLocation.y)) {
+                enemy.takeDamage(ENEMY_TAP_DAMAGE);
+                AudioManager.getInstance().playEatingSound(); // Reusing eating sound for now as attack sound
+                break; // Only damage one enemy per tap
+            }
+        }
     }
 
     @Override
@@ -232,7 +267,7 @@ public class GameScreen implements Screen {
                 screenPos.x - petStatsUI.getFloatingGroup().getWidth() / 2f,
                 screenPos.y + uiOffsetY);
 
-        // Update audio manager for both random and stat-based sounds
+        // Update audio managers
         AudioManager.getInstance().update(delta);
         AudioManager.getInstance().updateStats(
                 pet.getHunger(),
@@ -270,12 +305,41 @@ public class GameScreen implements Screen {
             }
         }
 
-        drawFruits(); // Draw fruits after background
-        game.batch.end();
+        drawFruits();
 
-        // Render game actors
-        gameStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
-        gameStage.draw();
+        // Draw enemies
+        for (Enemy enemy : enemyManager.getEnemies()) {
+            TextureRegion enemyTexture = enemy.getCurrentFrame();
+            game.batch.draw(
+                enemyTexture,
+                enemy.getPosition().x - enemy.getBounds().width / 2f,
+                enemy.getPosition().y - enemy.getBounds().height / 2f,
+                enemy.getBounds().width,
+                enemy.getBounds().height
+            );
+        }
+
+        // Draw pet
+        TextureRegion petFrame = pet.getCurrentFrame();
+        float scale = 0.3f;
+        float width = petFrame.getRegionWidth() * scale;
+        float height = petFrame.getRegionHeight() * scale;
+
+        if (pet.isFacingLeft()) {
+            petFrame.flip(true, false);
+        }
+        game.batch.draw(
+            petFrame,
+            pet.getPosition().x - width / 2f,
+            pet.getPosition().y - height / 2f,
+            width,
+            height
+        );
+        if (pet.isFacingLeft()) {
+            petFrame.flip(true, false); // Flip back to avoid affecting other draws
+        }
+
+        game.batch.end();
 
         // Render UI
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));

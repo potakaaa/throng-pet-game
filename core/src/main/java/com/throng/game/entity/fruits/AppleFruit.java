@@ -13,7 +13,7 @@ public class AppleFruit extends Fruit {
 
     @Override
     public void applyEffect() {
-        pet.eat(40, 10, 0, 2.1f);
+        pet.eat(40, 2, 0, 2.1f);
     }
 }
 

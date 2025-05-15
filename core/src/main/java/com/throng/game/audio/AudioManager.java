@@ -39,10 +39,17 @@ public class AudioManager {
     private static final float LOW_STAT_THRESHOLD = 30f; // Threshold for low stats
     private static final float HIGH_STAT_THRESHOLD = 70f; // Threshold for high stats
 
+    // Sound cooldown system
+    private float globalSoundCooldown = 0f;
+    private static final float GLOBAL_COOLDOWN_DURATION = 3f; // Minimum time between ANY throng sounds
+    private static final float STAT_SOUND_COOLDOWN = 10f; // Minimum time between stat-based sounds
+    private float statSoundCooldown = 0f;
+
     // Random sound timing
     private float timeSinceLastRandomSound = 0f;
-    private static final float MIN_TIME_BETWEEN_RANDOM_SOUNDS = 15f; // Minimum seconds between random sounds
-    private static final float RANDOM_SOUND_CHANCE = 0.1f; // 10% chance per check
+    private static final float MIN_TIME_BETWEEN_RANDOM_SOUNDS = 45f; // Increased to 45 seconds
+    private static final float MAX_TIME_BETWEEN_RANDOM_SOUNDS = 180f; // Increased to 3 minutes
+    private float nextRandomSoundTime = MIN_TIME_BETWEEN_RANDOM_SOUNDS;
 
     private AudioManager() {
         // Private constructor for singleton
@@ -71,12 +78,21 @@ public class AudioManager {
         if (isMuted || isSleeping)
             return;
 
-        // Handle random sound
-        timeSinceLastRandomSound += delta;
-        if (timeSinceLastRandomSound >= MIN_TIME_BETWEEN_RANDOM_SOUNDS &&
-                Math.random() < RANDOM_SOUND_CHANCE) {
-            randomThrongSound.play(volume);
-            timeSinceLastRandomSound = 0f;
+        // Update cooldowns
+        globalSoundCooldown = Math.max(0, globalSoundCooldown - delta);
+        statSoundCooldown = Math.max(0, statSoundCooldown - delta);
+
+        // Handle random sound with variable timing
+        if (globalSoundCooldown <= 0) {
+            timeSinceLastRandomSound += delta;
+            if (timeSinceLastRandomSound >= nextRandomSoundTime) {
+                randomThrongSound.play(volume);
+                timeSinceLastRandomSound = 0f;
+                globalSoundCooldown = GLOBAL_COOLDOWN_DURATION;
+                // Set next random sound time between MIN and MAX
+                nextRandomSoundTime = MIN_TIME_BETWEEN_RANDOM_SOUNDS + 
+                    (float)(Math.random() * (MAX_TIME_BETWEEN_RANDOM_SOUNDS - MIN_TIME_BETWEEN_RANDOM_SOUNDS));
+            }
         }
 
         // Update sleep sound timer
@@ -102,7 +118,7 @@ public class AudioManager {
     }
 
     public void updateStats(float hunger, float happiness, float energy, float wellbeing) {
-        if (isMuted || isSleeping)
+        if (isMuted || isSleeping || globalSoundCooldown > 0 || statSoundCooldown > 0)
             return;
 
         // Check for significant stat changes
@@ -135,12 +151,16 @@ public class AudioManager {
         }
 
         // Play appropriate sound based on conditions
-        if (hasLargeChange) {
-            statChangeThrongSound.play(volume);
-        } else if (hasLowStat) {
-            lowStatThrongSound.play(volume);
-        } else if (hasHighStat) {
-            highStatThrongSound.play(volume);
+        if (hasLargeChange || hasLowStat || hasHighStat) {
+            if (hasLargeChange) {
+                statChangeThrongSound.play(volume);
+            } else if (hasLowStat) {
+                lowStatThrongSound.play(volume);
+            } else {
+                highStatThrongSound.play(volume);
+            }
+            globalSoundCooldown = GLOBAL_COOLDOWN_DURATION;
+            statSoundCooldown = STAT_SOUND_COOLDOWN;
         }
 
         // Update previous values

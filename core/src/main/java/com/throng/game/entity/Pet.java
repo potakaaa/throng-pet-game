@@ -7,13 +7,12 @@ import com.throng.game.animation.AnimationManager;
 import com.throng.game.ui.PetStatsUI;
 import com.throng.game.audio.AudioManager;
 
-public class Pet {
+public class Pet extends Entity {
 
     public enum PetState {
         IDLE, WALKING, BLINKING, SLEEPING, EATING, PLAYING, DEAD
     }
 
-    private final Vector2 position;
     private final Vector2 targetPosition;
     private boolean facingLeft = false;
 
@@ -45,7 +44,7 @@ public class Pet {
     private float hungerGain, happinessGain, energyGain;
 
     public Pet(Vector2 startPos, PetStatObserver statsObserver) {
-        this.position = new Vector2(startPos);
+        super(startPos);
         this.targetPosition = new Vector2(startPos);
         this.statsObserver = statsObserver;
 
@@ -61,7 +60,8 @@ public class Pet {
         this.stateDuration = 0;
     }
 
-    public void update(float delta, float screenWidth, float screenHeight) {
+    @Override
+    public void update(float delta, float worldWidth, float worldHeight) {
         if (currentState == PetState.DEAD) {
             return;
         }
@@ -73,7 +73,7 @@ public class Pet {
         decayStats(delta);
 
         if (!manualControl && !isInTimedAction()) {
-            updateBehavior(screenWidth, screenHeight, delta);
+            updateBehavior(worldWidth, worldHeight, delta);
         } else if (!moving && !isInTimedAction()) {
             currentState = PetState.IDLE;
         }
@@ -147,7 +147,9 @@ public class Pet {
         }
     }
 
-    private void die() {
+    @Override
+    protected void die() {
+        super.die();
         cancelTimedAction();
         isWalking = false;
         manualControl = false;
@@ -188,7 +190,7 @@ public class Pet {
         }
     }
 
-    private void updateBehavior(float screenWidth, float screenHeight, float delta) {
+    private void updateBehavior(float worldWidth, float worldHeight, float delta) {
         previousState = currentState;
         if (suppressAutoBehavior)
             return;
@@ -197,7 +199,7 @@ public class Pet {
             if (Math.random() < 0.01)
                 toggleBlink();
             if (Math.random() < 0.002 && !isWalking)
-                startRandomWalk(screenWidth, screenHeight);
+                startRandomWalk(worldWidth, worldHeight);
         }
 
         if (currentState == PetState.WALKING) {
@@ -226,7 +228,7 @@ public class Pet {
         }
     }
 
-    public void startRandomWalk(float screenWidth, float screenHeight) {
+    public void startRandomWalk(float worldWidth, float worldHeight) {
         // Stop sleeping sound if we were sleeping
         if (currentState == PetState.SLEEPING) {
             AudioManager.getInstance().stopSleepingSound();
@@ -234,8 +236,8 @@ public class Pet {
 
         float padding = 50f;
 
-        targetPosition.x = padding + (float) Math.random() * (screenWidth - 2 * padding);
-        targetPosition.y = padding + (float) Math.random() * (screenHeight - 2 * padding);
+        targetPosition.x = padding + (float) Math.random() * (worldWidth - 2 * padding);
+        targetPosition.y = padding + (float) Math.random() * (worldHeight - 2 * padding);
 
         isWalking = true;
         currentState = PetState.WALKING;
@@ -303,7 +305,7 @@ public class Pet {
         currentState = PetState.IDLE;
     }
 
-    public void manualMove(float dx, float dy, float screenWidth, float screenHeight, float delta) {
+    public void manualMove(float dx, float dy, float worldWidth, float worldHeight, float delta) {
         // Check if we were sleeping before cancelling the action
         boolean wasSleeping = currentState == PetState.SLEEPING;
 
@@ -328,8 +330,8 @@ public class Pet {
 
             // Simple boundary check with fixed padding
             float padding = 50f;
-            newX = Math.max(padding, Math.min(screenWidth - padding, newX));
-            newY = Math.max(padding, Math.min(screenHeight - padding, newY));
+            newX = Math.max(padding, Math.min(worldWidth - padding, newX));
+            newY = Math.max(padding, Math.min(worldHeight - padding, newY));
 
             position.set(newX, newY);
         } else {
@@ -337,11 +339,7 @@ public class Pet {
         }
     }
 
-    public void setPosition(Vector2 newPosition) {
-        position.set(newPosition);
-        targetPosition.set(newPosition);
-    }
-
+    @Override
     public TextureRegion getCurrentFrame() {
         if (animationManager.get(currentState.toString()) != null) {
             return animationManager.get(currentState.toString()).getKeyFrame(stateTime);
@@ -364,22 +362,6 @@ public class Pet {
                 collisionHeight);
     }
 
-    public Vector2 getPosition() {
-        return position;
-    }
-
-    public void dispose() {
-        animationManager.dispose();
-    }
-
-    public void setStatsObserver(PetStatsUI statsObserver) {
-        this.statsObserver = statsObserver;
-    }
-
-    public boolean isFacingLeft() {
-        return facingLeft;
-    }
-
     public float getHunger() {
         return hunger;
     }
@@ -394,5 +376,23 @@ public class Pet {
 
     public float getWellbeing() {
         return wellbeing;
+    }
+
+    public void setPosition(Vector2 newPosition) {
+        position.set(newPosition);
+        targetPosition.set(newPosition);
+    }
+
+    @Override
+    public void dispose() {
+        animationManager.dispose();
+    }
+
+    public void setStatsObserver(PetStatsUI statsObserver) {
+        this.statsObserver = statsObserver;
+    }
+
+    public boolean isFacingLeft() {
+        return facingLeft;
     }
 }

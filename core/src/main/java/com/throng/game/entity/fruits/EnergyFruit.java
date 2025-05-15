@@ -15,6 +15,6 @@ public class EnergyFruit extends Fruit {
     @Override
     public void applyEffect() {
         // Boost energy +30, no hunger/happiness
-        pet.eat(10f, 0f, 30f, 2.1f); // Duration matches animation length (7 frames * 0.3s)
+        pet.eat(0f, 0f, 5f, 2.1f); // Duration matches animation length (7 frames * 0.3s)
     }
 }
