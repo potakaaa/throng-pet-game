@@ -12,6 +12,7 @@ public class Enemy extends Entity {
     private static final float MOVEMENT_SPEED = 120f;
     private static final float ATTACK_RANGE = 75f;
     private static final float ATTACK_DAMAGE = 10f;
+    private static final float WELLBEING_DAMAGE = 5f;
     private static final float ATTACK_COOLDOWN = 1.5f;
     private static final float HURT_DURATION = 0.3f;
 
@@ -114,6 +115,7 @@ public class Enemy extends Entity {
 
     private void attack(Pet target) {
         target.eat(-ATTACK_DAMAGE, -ATTACK_DAMAGE, -ATTACK_DAMAGE, 0f);
+        target.damageWellbeing(WELLBEING_DAMAGE);
         attackTimer = ATTACK_COOLDOWN;
         EnemySoundManager.getInstance().playAttackSound();
     }

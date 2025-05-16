@@ -320,6 +320,18 @@ public class Pet extends Entity {
         stateDuration = 1f; // or even 0.5f for brief effect
     }
 
+    public void damageWellbeing(float damage) {
+        if (isDead())
+            return;
+            
+        wellbeing = Math.max(0f, wellbeing - damage);
+        
+        // Check for death if wellbeing reaches 0
+        if (wellbeing <= 0f) {
+            die();
+        }
+    }
+
     private void cancelTimedAction() {
         stateDuration = 0;
         stateTimer = 0;
