@@ -207,7 +207,7 @@ public class Pet extends Entity {
         }
 
         // Check for death conditions after decay
-        if (hunger <= 0f || happiness <= 0f || energy <= 0f) {
+        if (wellbeing <= 0) {
             die();
         }
     }

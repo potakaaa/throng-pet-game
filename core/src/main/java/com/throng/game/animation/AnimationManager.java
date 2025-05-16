@@ -18,7 +18,7 @@ public class AnimationManager {
         animations.put("SLEEPING", loadAnimation("sprite/Sleeping", 3, 0.3f));
         animations.put("PLAYING", loadAnimation("sprite/Playing", 5, 0.2f, "Playing"));
         animations.put("EATING", loadAnimation("sprite/Eating", 7, 0.3f, "Eating"));
-        animations.put("DEAD", loadAnimation("sprite/Dying", 3, 0.5f, "Dying", Animation.PlayMode.NORMAL));
+        animations.put("DEAD", loadAnimation("sprite/Dying", 4, 0.5f, "Dying", Animation.PlayMode.NORMAL));
     }
 
     private Animation<TextureRegion> loadAnimation(String folderPath, int frameCount, float frameDuration) {
