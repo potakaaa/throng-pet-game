@@ -16,12 +16,17 @@ import com.throng.game.MainMenuScreen;
 import com.throng.game.ThrongGame;
 import com.throng.game.audio.AudioManager;
 import com.throng.game.entity.PetStatObserver;
+import com.throng.game.scoring.ScoreManager;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
 public class PetStatsUI implements PetStatObserver {
     private final Table statusTable;
     private final Table buttonTable;
     private final ThrongGame game;
+    private ImageButton feedButton;
+    private float feedCooldown = 0f;
+    private static final float FEED_COOLDOWN_DURATION = 30f;
 
     private ProgressBar hungerBar;
     private ProgressBar happinessBar;
@@ -38,6 +43,10 @@ public class PetStatsUI implements PetStatObserver {
     private final ProgressBar.ProgressBarStyle energyStyle;
     private final ProgressBar.ProgressBarStyle wellbeingStyle;
     private final Skin skin;
+
+    private Image feedOverlay;
+    private Label cooldownLabel;
+    private Stack feedButtonStack;
 
     public interface PetActionListener {
         void onFeed();
@@ -162,7 +171,28 @@ public class PetStatsUI implements PetStatObserver {
         feedStyle.imageUp = new TextureRegionDrawable(new TextureRegion(feedTexture));
         feedStyle.imageDown = new TextureRegionDrawable(new TextureRegion(feedPressedTexture));
         feedStyle.imageOver = new TextureRegionDrawable(new TextureRegion(feedPressedTexture));
-        ImageButton feedButton = new ImageButton(feedStyle);
+        feedButton = new ImageButton(feedStyle);
+
+        // Create dark overlay
+        Pixmap overlayPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        overlayPixmap.setColor(0, 0, 0, 0.6f);
+        overlayPixmap.fill();
+        Texture overlayTexture = new Texture(overlayPixmap);
+        overlayPixmap.dispose();
+        feedOverlay = new Image(overlayTexture);
+        feedOverlay.setVisible(false);
+
+        // Create cooldown label
+        Label.LabelStyle labelStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.WHITE);
+        cooldownLabel = new Label("", labelStyle);
+        cooldownLabel.setAlignment(Align.center);
+        cooldownLabel.setVisible(false);
+
+        // Create a stack to layer the button, overlay, and label
+        feedButtonStack = new Stack();
+        feedButtonStack.add(feedButton);
+        feedButtonStack.add(feedOverlay);
+        feedButtonStack.add(cooldownLabel);
 
         ImageButton.ImageButtonStyle playStyle = new ImageButton.ImageButtonStyle();
         playStyle.imageUp = new TextureRegionDrawable(new TextureRegion(playTexture));
@@ -177,7 +207,7 @@ public class PetStatsUI implements PetStatObserver {
         ImageButton sleepButton = new ImageButton(sleepStyle);
 
         // Add buttons to table with original large size and spacing
-        table.add(feedButton).size(140).padRight(20);
+        table.add(feedButtonStack).size(140).padRight(20);
         table.add(playButton).size(140).padRight(20);
         table.add(sleepButton).size(140);
 
@@ -185,14 +215,21 @@ public class PetStatsUI implements PetStatObserver {
         feedButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                AudioManager.getInstance().playClickActionSound();
-                listener.onFeed();
+                if (feedCooldown <= 0) {
+                    AudioManager.getInstance().playClickActionSound();
+                    ScoreManager.getInstance().addScore(ScoreManager.SCORE_FEED);
+                    listener.onFeed();
+                    feedCooldown = FEED_COOLDOWN_DURATION;
+                    feedOverlay.setVisible(true);
+                    cooldownLabel.setVisible(true);
+                }
             }
         });
         playButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 AudioManager.getInstance().playClickActionSound();
+                ScoreManager.getInstance().addScore(ScoreManager.SCORE_PLAY);
                 listener.onPlay();
             }
         });
@@ -201,6 +238,7 @@ public class PetStatsUI implements PetStatObserver {
             public void changed(ChangeEvent event, Actor actor) {
                 AudioManager.getInstance().playClickActionSound();
                 AudioManager.getInstance().playSleepingSound();
+                ScoreManager.getInstance().addScore(ScoreManager.SCORE_SLEEP);
                 listener.onSleep();
             }
         });
@@ -231,24 +269,35 @@ public class PetStatsUI implements PetStatObserver {
             return;
         isDead = true;
 
+        // Hide all pet-related UI
         buttonTable.setVisible(false);
+        statusTable.setVisible(false);
 
         // Table for centered death message and button
         Table deathTable = new Table();
         deathTable.setFillParent(true);
         deathTable.center();
 
-        Label.LabelStyle labelStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.RED);
-        Label deathLabel = new Label("Your pet has died", labelStyle);
+        Label.LabelStyle deathStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.RED);
+        Label deathLabel = new Label("Your pet has died", deathStyle);
         deathLabel.setFontScale(1.4f);
+
+        // Add score labels with improved spacing
+        Label.LabelStyle scoreStyle = new Label.LabelStyle(skin.getFont("default-font"), Color.WHITE);
+        Label scoreLabel = new Label("Score: " + ScoreManager.getInstance().getCurrentScore(), scoreStyle);
+        scoreLabel.setFontScale(1.2f);
+        Label highScoreLabel = new Label("High Score: " + ScoreManager.getInstance().getHighScore(), scoreStyle);
+        highScoreLabel.setFontScale(1.2f);
 
         TextButton mainMenuButton = new TextButton("Main Menu", skin);
         mainMenuButton.getLabel().setFontScale(1.2f);
 
-        deathTable.add(deathLabel).padBottom(20).row();
+        deathTable.add(deathLabel).padBottom(40).row();
+        deathTable.add(scoreLabel).padBottom(20).row();
+        deathTable.add(highScoreLabel).padBottom(40).row();
         deathTable.add(mainMenuButton).width(200).height(60);
 
-        floatingGroup.addActor(deathTable); // Or add to stage directly if needed
+        floatingGroup.addActor(deathTable);
 
         mainMenuButton.addListener(new ChangeListener() {
             @Override
@@ -258,7 +307,7 @@ public class PetStatsUI implements PetStatObserver {
             }
         });
 
-        floatingGroup.toFront(); // Ensure it's rendered on top
+        floatingGroup.toFront();
     }
 
     private void updateBarColor(ProgressBar bar, float value, ProgressBar.ProgressBarStyle style) {
@@ -284,5 +333,20 @@ public class PetStatsUI implements PetStatObserver {
 
     public Group getFloatingGroup() {
         return floatingGroup;
+    }
+
+    public void update(float delta) {
+        if (feedCooldown > 0) {
+            feedCooldown -= delta;
+            if (feedCooldown <= 0) {
+                feedCooldown = 0;
+                feedOverlay.setVisible(false);
+                cooldownLabel.setVisible(false);
+            } else {
+                // Update the countdown text
+                int secondsLeft = (int) Math.ceil(feedCooldown);
+                cooldownLabel.setText(String.valueOf(secondsLeft));
+            }
+        }
     }
 }

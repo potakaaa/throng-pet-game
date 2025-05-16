@@ -28,6 +28,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.throng.game.entity.Enemy;
 import com.throng.game.entity.EnemyManager;
 import com.badlogic.gdx.InputAdapter;
+import com.throng.game.scoring.ScoreManager;
 
 public class GameScreen implements Screen {
     private final ThrongGame game;
@@ -59,6 +60,9 @@ public class GameScreen implements Screen {
 
     public GameScreen(final ThrongGame game) {
         this.game = game;
+        
+        // Reset score at the start of a new game
+        ScoreManager.getInstance().resetScore();
 
         camera = new OrthographicCamera();
         viewport = new ScreenViewport(camera);
@@ -151,6 +155,7 @@ public class GameScreen implements Screen {
                     fruit.touch();
                     fruit.applyEffect();
                     AudioManager.getInstance().playEatingSound();
+                    ScoreManager.getInstance().addScore(ScoreManager.SCORE_COLLECT_FRUIT);
                     fruit.dispose();
                     fruits.removeIndex(i);
                 }
@@ -163,32 +168,38 @@ public class GameScreen implements Screen {
     private void update(float delta) {
         float dx = 0, dy = 0;
         boolean keyPressed = false;
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            dy += 0.7f;
-            keyPressed = true;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            dy -= 0.7f;
-            keyPressed = true;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            dx -= 0.7f;
-            keyPressed = true;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            dx += 0.7f;
-            keyPressed = true;
+
+        // Only process movement if pet is alive
+        if (!pet.isDead()) {
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+                dy += 0.7f;
+                keyPressed = true;
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                dy -= 0.7f;
+                keyPressed = true;
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+                dx -= 0.7f;
+                keyPressed = true;
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                dx += 0.7f;
+                keyPressed = true;
+            }
+
+            if (keyPressed) {
+                pet.manualMove(dx, dy, WORLD_WIDTH, WORLD_HEIGHT, delta);
+                timeSinceManualInput = 0f;
+            } else {
+                timeSinceManualInput += delta;
+            }
+            pet.suppressAutoBehavior = (!keyPressed && timeSinceManualInput < AUTO_BEHAVIOR_TIMEOUT);
         }
 
-        if (keyPressed) {
-            pet.manualMove(dx, dy, WORLD_WIDTH, WORLD_HEIGHT, delta);
-            timeSinceManualInput = 0f;
-        } else {
-            timeSinceManualInput += delta;
-        }
-        pet.suppressAutoBehavior = (!keyPressed && timeSinceManualInput < AUTO_BEHAVIOR_TIMEOUT);
         pet.update(delta, WORLD_WIDTH, WORLD_HEIGHT);
         enemyManager.update(delta, WORLD_WIDTH, WORLD_HEIGHT);
+        petStatsUI.update(delta);
 
         // Update and check fruits
         for (int i = fruits.size - 1; i >= 0; i--) {
@@ -247,8 +258,11 @@ public class GameScreen implements Screen {
         for (Enemy enemy : enemies) {
             if (!enemy.isDead() && enemy.getBounds().contains(tapLocation.x, tapLocation.y)) {
                 enemy.takeDamage(ENEMY_TAP_DAMAGE);
-                AudioManager.getInstance().playEatingSound(); // Reusing eating sound for now as attack sound
-                break; // Only damage one enemy per tap
+                if (enemy.isDead()) {
+                    ScoreManager.getInstance().addScore(ScoreManager.SCORE_KILL_ENEMY);
+                }
+                AudioManager.getInstance().playEatingSound();
+                break;
             }
         }
     }

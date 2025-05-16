@@ -22,6 +22,7 @@ public class AudioManager {
     private boolean isSleeping = false;
     private float sleepSoundDuration = 0f;
     private float sleepSoundTimer = 0f;
+    private boolean backgroundMusicPaused = false;
 
     // Volume settings
     private static final float NORMAL_BG_VOLUME = 0.5f;
@@ -111,9 +112,12 @@ public class AudioManager {
         }
         isSleeping = false;
         sleepSoundTimer = 0f;
-        // Restore normal background music volume
-        if (backgroundMusic != null) {
+        
+        // Resume background music if it was paused
+        if (backgroundMusic != null && backgroundMusicPaused) {
+            backgroundMusic.play();
             backgroundMusic.setVolume(isMuted ? 0f : NORMAL_BG_VOLUME);
+            backgroundMusicPaused = false;
         }
     }
 
@@ -176,9 +180,10 @@ public class AudioManager {
             sleepingSound.stop(sleepingSoundId);
         }
 
-        // Lower background music volume
-        if (backgroundMusic != null) {
-            backgroundMusic.setVolume(isMuted ? 0f : SLEEPING_BG_VOLUME);
+        // Pause background music completely during sleep
+        if (backgroundMusic != null && backgroundMusic.isPlaying()) {
+            backgroundMusic.pause();
+            backgroundMusicPaused = true;
         }
 
         // Play sleeping sound at higher volume
